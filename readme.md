@@ -1,6 +1,6 @@
 # Laravel Inventory Example
 
-This repository contains a minimal Laravel 12 application demonstrating an inventory system with hierarchical categories, warehouse management and sales tracking.
+This repository contains a minimal Laravel 12 application demonstrating an inventory system with hierarchical categories, warehouse management and sales tracking. The application now uses Jetstream's Livewire stack for authentication.
 
 ## Usage
 
@@ -8,12 +8,16 @@ This repository contains a minimal Laravel 12 application demonstrating an inven
    ```bash
    composer install
    ```
-2. Run database migrations:
+2. Install JavaScript dependencies and build assets:
+   ```bash
+   npm install && npm run build
+   ```
+3. Run database migrations:
    ```bash
    php artisan migrate
    ```
-3. Start the built-in server:
+4. Start the built-in server:
    ```bash
    php artisan serve
    ```
-4. Visit `/example` to seed demo data and see a daily sales total in CUP.
+5. Visit `/register` to create an account or `/login` if one already exists. You can still visit `/example` to seed demo data and see a daily sales total in CUP.
