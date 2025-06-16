@@ -9,16 +9,14 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        return view('categories.index', [
-            'categories' => Category::with('parent')->get(),
-        ]);
+        $categories = Category::with('parent')->get();
+        return view('categories.index', compact('categories'));
     }
 
     public function create()
     {
-        return view('categories.create', [
-            'categories' => Category::all(),
-        ]);
+        $categories = Category::all();
+        return view('categories.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -29,7 +27,28 @@ class CategoryController extends Controller
         ]);
 
         Category::create($data);
-
         return redirect()->route('categories.index');
+    }
+
+    public function edit(Category $category)
+    {
+        $categories = Category::where('id', '!=', $category->id)->get();
+        return view('categories.edit', compact('category', 'categories'));
+    }
+
+    public function update(Request $request, Category $category)
+    {
+        $data = $request->validate([
+            'name' => 'required',
+            'parent_id' => 'nullable|exists:categories,id',
+        ]);
+
+        $category->update($data);
+        return redirect()->route('categories.index');
+    }
+
+    public function destroy(Category $category)
+    {
+        $category->delete();
     }
 }

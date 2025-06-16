@@ -21,12 +21,29 @@ class WarehouseController extends Controller
 
     public function store(Request $request)
     {
+        $data = $request->validate(['name' => 'required']);
+        Warehouse::create($data);
+        return redirect()->route('warehouses.index');
+    }
+
+    public function edit(Warehouse $warehouse)
+    {
+        return view('warehouses.edit', compact('warehouse'));
+    }
+
+    public function update(Request $request, Warehouse $warehouse)
+    {
+        $data = $request->validate(['name' => 'required']);
+        $warehouse->update($data);
+        return redirect()->route('warehouses.index');
+    }
+
+    public function destroy(Warehouse $warehouse)
+    {
+        $warehouse->delete();
         $data = $request->validate([
             'name' => 'required',
         ]);
-
-        Warehouse::create($data);
-
         return redirect()->route('warehouses.index');
     }
 }

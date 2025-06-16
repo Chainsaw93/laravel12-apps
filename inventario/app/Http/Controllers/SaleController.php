@@ -4,15 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\{Sale, Warehouse, Product};
 use App\Enums\PaymentMethod;
-use Illuminate\Http\Request;
 
 class SaleController extends Controller
 {
     public function index()
     {
-        return view('sales.index', [
-            'sales' => Sale::with(['product', 'warehouse'])->get(),
-        ]);
+        $sales = Sale::with(['product', 'warehouse'])->latest()->get();
+        return view('sales.index', compact('sales'));
     }
 
     public function create()
@@ -26,7 +24,6 @@ class SaleController extends Controller
 
     public function store(Request $request)
     {
-        $methods = implode(',', array_column(PaymentMethod::cases(), 'value'));
         $data = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'product_id' => 'required|exists:products,id',
@@ -36,7 +33,6 @@ class SaleController extends Controller
         ]);
 
         Sale::create($data);
-
         return redirect()->route('sales.index');
     }
 }
