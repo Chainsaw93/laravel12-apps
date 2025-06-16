@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Enums\PaymentMethod;
 use App\Models\{Category, Product, Warehouse, Stock, Sale};

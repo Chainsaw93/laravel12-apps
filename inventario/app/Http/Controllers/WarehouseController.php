@@ -9,8 +9,9 @@ class WarehouseController extends Controller
 {
     public function index()
     {
-        $warehouses = Warehouse::all();
-        return view('warehouses.index', compact('warehouses'));
+        return view('warehouses.index', [
+            'warehouses' => Warehouse::all(),
+        ]);
     }
 
     public function create()
@@ -40,6 +41,9 @@ class WarehouseController extends Controller
     public function destroy(Warehouse $warehouse)
     {
         $warehouse->delete();
+        $data = $request->validate([
+            'name' => 'required',
+        ]);
         return redirect()->route('warehouses.index');
     }
 }

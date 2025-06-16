@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Sale, Warehouse, Product};
-use Illuminate\Http\Request;
+use App\Enums\PaymentMethod;
 
 class SaleController extends Controller
 {
@@ -15,9 +15,11 @@ class SaleController extends Controller
 
     public function create()
     {
-        $warehouses = Warehouse::all();
-        $products = Product::all();
-        return view('sales.create', compact('warehouses', 'products'));
+        return view('sales.create', [
+            'warehouses' => Warehouse::all(),
+            'products' => Product::all(),
+            'paymentMethods' => PaymentMethod::cases(),
+        ]);
     }
 
     public function store(Request $request)
@@ -27,7 +29,7 @@ class SaleController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'price_per_unit' => 'required|numeric|min:0',
-            'payment_method' => 'required|string',
+            'payment_method' => 'required|in:' . $methods,
         ]);
 
         Sale::create($data);
