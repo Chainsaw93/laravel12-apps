@@ -2,67 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{StockMovement, Warehouse, Product};
+use App\Enums\PaymentMethod;
+use App\Models\{Sale, Product, Warehouse, ExchangeRate};
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
-class InventoryReportController extends Controller
+class SaleController extends Controller
 {
     public function index()
     {
-        return view('reports.inventory.index', [
-            'warehouses' => Warehouse::all(),
+        $sales = Sale::with(['product','warehouse'])->latest()->get();
+        return view('sales.index', compact('sales'));
+    }
+
+    public function create()
+    {
+        $rates = ExchangeRate::orderByDesc('effective_date')
+            ->get()
+            ->keyBy('currency');
+        return view('sales.create', [
             'products' => Product::all(),
-            'data' => collect(),
+            'warehouses' => Warehouse::all(),
+            'rates' => $rates,
         ]);
     }
 
-    public function generate(Request $request)
+    public function store(Request $request)
     {
-        $data = $this->aggregate($request);
-        return view('reports.inventory.index', [
-            'warehouses' => Warehouse::all(),
-            'products' => Product::all(),
-            'data' => $data,
+        $data = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'quantity' => 'required|integer|min:1',
+            'price_per_unit' => 'required|numeric|min:0',
+            'payment_method' => ['required', Rule::in(array_map(fn($m) => $m->value, PaymentMethod::cases()))],
+            'currency' => 'required|in:CUP,USD,MLC',
+            'exchange_rate_id' => 'nullable|exists:exchange_rates,id',
         ]);
-    }
 
-    public function chartData(Request $request)
-    {
-        return response()->json($this->aggregate($request));
-    }
+        if ($data['currency'] === 'CUP') {
+            $data['exchange_rate_id'] = null;
+        }
 
-    public function pdf(Request $request)
-    {
-        $data = $this->aggregate($request);
-        $chart = $request->input('chart');
-        return Pdf::loadView('reports.inventory.pdf', [
-            'data' => $data,
-            'chart' => $chart,
-        ])->download('inventory_report.pdf');
-    }
+        Sale::create($data);
 
-    protected function aggregate(Request $request): Collection
-    {
-        $query = StockMovement::query()
-            ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
-            ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
-            ->when($request->warehouse_id, fn($q, $w) => $q->whereHas('stock', fn($sq) => $sq->where('warehouse_id', $w)))
-            ->when($request->product_id, fn($q, $p) => $q->whereHas('stock', fn($sq) => $sq->where('product_id', $p)))
-            ->when($request->type && in_array($request->type, ['in','out']), function($q, $t) {
-                $types = $t === 'in'
-                    ? ['in', 'transfer_in']
-                    : ['out', 'transfer_out', 'adjustment'];
-                $q->whereIn('type', $types);
-            });
-
-        return $query
-            ->selectRaw('DATE(created_at) as date, '
-                . 'sum(case when type in ("in","transfer_in") then quantity else 0 end) as inputs, '
-                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        return redirect()->route('sales.index');
     }
 }

@@ -14,6 +14,8 @@ class Sale extends Model
         'quantity',
         'price_per_unit',
         'payment_method',
+        'currency',
+        'exchange_rate_id',
     ];
 
     protected $casts = [
@@ -28,5 +30,10 @@ class Sale extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function exchangeRate(): BelongsTo
+    {
+        return $this->belongsTo(ExchangeRate::class);
     }
 }

@@ -12,7 +12,8 @@ use App\Http\Controllers\{
     SalesReportController,
     StockEntryController,
     ClientController,
-    InvoiceController
+    InvoiceController,
+    ExchangeRateController
 };
 
 Route::view('/', 'welcome')->name('welcome');
@@ -40,12 +41,13 @@ Route::get('/example', function () {
         'quantity' => 1,
         'price_per_unit' => 1000,
         'payment_method' => PaymentMethod::CASH_USD,
+        'currency' => 'USD',
     ]);
 
     $report = new SalesReport();
 
     return [
-        'daily_total_cup' => $report->total('daily', usdToCup: 120, mlcToCup: 130),
+        'daily_total_cup' => $report->total('daily'),
     ];
 })->name('example');
 
@@ -61,6 +63,7 @@ Route::middleware([
     Route::resource('warehouses', WarehouseController::class);
     Route::resource('clients', ClientController::class);
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store']);
+    Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update']);
 
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
