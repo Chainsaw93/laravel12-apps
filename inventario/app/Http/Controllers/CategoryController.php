@@ -72,7 +72,13 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        if ($category->image_path) {
+            Storage::disk('public')->delete($category->image_path);
+        }
+
         $category->delete();
+
+        return redirect()->route('categories.index');
     }
     private function saveCroppedImage(string $imageData): string
     {
