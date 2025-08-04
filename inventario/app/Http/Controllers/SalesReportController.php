@@ -12,15 +12,12 @@ class SalesReportController extends Controller
 {
     public function index(Request $request, SalesReport $report)
     {
-        $usd = (float) $request->query('usd_to_cup', 120);
-        $mlc = (float) $request->query('mlc_to_cup', 130);
-
         $sales = $this->filteredSales($request);
 
         return view('reports.index', [
-            'daily' => $report->total('daily', $usd, $mlc),
-            'weekly' => $report->total('weekly', $usd, $mlc),
-            'monthly' => $report->total('monthly', $usd, $mlc),
+            'daily' => $report->total('daily'),
+            'weekly' => $report->total('weekly'),
+            'monthly' => $report->total('monthly'),
             'sales' => $sales,
             'products' => Product::all(),
             'warehouses' => Warehouse::all(),
@@ -39,15 +36,18 @@ class SalesReportController extends Controller
         $sales = $this->filteredSales($request);
         $callback = function () use ($sales) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Date', 'Product', 'Warehouse', 'Quantity', 'Price', 'Total', 'Payment Method']);
+            fputcsv($out, ['Date', 'Product', 'Warehouse', 'Quantity', 'Price', 'Price CUP', 'Total CUP', 'Payment Method']);
             foreach ($sales as $sale) {
+                $rate = $sale->exchangeRate->rate_to_cup ?? 1;
+                $priceCup = $sale->price_per_unit * $rate;
                 fputcsv($out, [
                     $sale->created_at->toDateString(),
                     $sale->product->name,
                     $sale->warehouse->name,
                     $sale->quantity,
                     $sale->price_per_unit,
-                    $sale->quantity * $sale->price_per_unit,
+                    $priceCup,
+                    $sale->quantity * $priceCup,
                     $sale->payment_method->value ?? $sale->payment_method,
                 ]);
             }
@@ -58,7 +58,7 @@ class SalesReportController extends Controller
 
     protected function filteredSales(Request $request)
     {
-        return Sale::with(['product', 'warehouse'])
+        return Sale::with(['product', 'warehouse', 'exchangeRate'])
             ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
             ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
             ->when($request->product_id, fn($q, $p) => $q->where('product_id', $p))

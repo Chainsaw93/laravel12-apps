@@ -35,6 +35,20 @@
                         </div>
                     </div>
                     <div>
+                        <x-label for="currency" :value="__('Currency')" />
+                        <select id="currency" name="currency" class="mt-1 block w-full rounded-md">
+                            @foreach(['CUP','USD','MLC'] as $cur)
+                                @php $rate = $rates[$cur] ?? null; @endphp
+                                <option value="{{ $cur }}" data-rate="{{ $rate?->rate_to_cup }}" data-id="{{ $rate?->id }}">{{ $cur }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-label value="{{ __('Exchange Rate to CUP') }}" />
+                        <span id="rate_display"></span>
+                        <input type="hidden" name="exchange_rate_id" id="exchange_rate_id" />
+                    </div>
+                    <div>
                         <x-label for="payment_method" :value="__('Payment Method')" />
                         <select id="payment_method" name="payment_method" class="mt-1 block w-full rounded-md">
                             @foreach(\App\Enums\PaymentMethod::cases() as $method)
@@ -47,4 +61,18 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('currency');
+            const rateDisplay = document.getElementById('rate_display');
+            const rateInput = document.getElementById('exchange_rate_id');
+            function updateRate(){
+                const opt = select.options[select.selectedIndex];
+                rateDisplay.textContent = opt.dataset.rate || '1';
+                rateInput.value = opt.dataset.id || '';
+            }
+            updateRate();
+            select.addEventListener('change', updateRate);
+        });
+    </script>
 </x-app-layout>

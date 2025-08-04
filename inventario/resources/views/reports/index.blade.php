@@ -86,24 +86,27 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Warehouse') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Quantity') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Price') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Total') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Price CUP') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Total CUP') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Payment') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($sales as $sale)
+                            @php $rate = $sale->exchangeRate->rate_to_cup ?? 1; $priceCup = $sale->price_per_unit * $rate; @endphp
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->created_at->toDateString() }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->product->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->warehouse->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->quantity }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->price_per_unit,2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->quantity * $sale->price_per_unit,2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->price_per_unit,2) }} {{ $sale->currency }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($priceCup,2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->quantity * $priceCup,2) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->payment_method->name ?? $sale->payment_method }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center">{{ __('No data') }}</td>
+                                <td colspan="8" class="px-6 py-4 whitespace-nowrap text-center">{{ __('No data') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
