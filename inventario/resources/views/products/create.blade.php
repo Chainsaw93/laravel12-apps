@@ -3,6 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Add Product') }}</h2>
     </x-slot>
 
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css">
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <form method="POST" action="{{ route('products.store') }}" enctype="multipart/form-data" class="bg-white shadow sm:rounded-lg p-6 space-y-4">
@@ -38,6 +39,8 @@
                 <div>
                     <label for="image" class="block text-sm font-medium text-gray-700">Image</label>
                     <input id="image" name="image" type="file" class="mt-1 block w-full text-sm text-gray-500" accept="image/*">
+                    <img id="image-preview" class="mt-2 max-h-64" />
+                    <input type="hidden" name="cropped_image" id="cropped_image">
                 </div>
                 <div>
                     <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
@@ -45,4 +48,36 @@
             </form>
         </div>
     </div>
+    <script src="https://unpkg.com/cropperjs"></script>
+    <script>
+        let cropper;
+        const input = document.getElementById('image');
+        const image = document.getElementById('image-preview');
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                image.src = url;
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(image, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                });
+            }
+        });
+        document.querySelector('form').addEventListener('submit', function (e) {
+            if (cropper) {
+                e.preventDefault();
+                cropper.getCroppedCanvas().toBlob((blob) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        document.getElementById('cropped_image').value = reader.result;
+                        input.name = '';
+                        this.submit();
+                    };
+                    reader.readAsDataURL(blob);
+                });
+            }
+        });
+    </script>
 </x-app-layout>
