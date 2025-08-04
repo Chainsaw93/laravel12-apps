@@ -16,6 +16,7 @@ class Sale extends Model
         'payment_method',
         'currency',
         'exchange_rate_id',
+        'user_id',
     ];
 
     protected $casts = [

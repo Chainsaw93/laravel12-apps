@@ -6,6 +6,7 @@ use App\Enums\PaymentMethod;
 use App\Models\{Sale, Product, Warehouse, ExchangeRate};
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class SaleController extends Controller
 {
@@ -42,6 +43,8 @@ class SaleController extends Controller
         if ($data['currency'] === 'CUP') {
             $data['exchange_rate_id'] = null;
         }
+
+        $data['user_id'] = Auth::id();
 
         Sale::create($data);
 

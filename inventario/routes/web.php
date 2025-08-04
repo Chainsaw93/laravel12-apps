@@ -13,7 +13,8 @@ use App\Http\Controllers\{
     StockEntryController,
     ClientController,
     InvoiceController,
-    ExchangeRateController
+    ExchangeRateController,
+    PurchaseController
 };
 
 Route::view('/', 'welcome')->name('welcome');
@@ -64,6 +65,7 @@ Route::middleware([
     Route::resource('clients', ClientController::class);
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store']);
     Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update']);
+    Route::resource('purchases', PurchaseController::class)->only(['index','create','store']);
 
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
