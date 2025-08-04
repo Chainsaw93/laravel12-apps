@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
+    private function storeCroppedImage(string $image)
+    {
+        $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $image));
+        $path = 'products/' . uniqid() . '.jpg';
+        Storage::disk('public')->put($path, $data);
+        return $path;
+    }
     public function index()
     {
         return view('products.index', [
@@ -31,11 +38,11 @@ class ProductController extends Controller
             'price' => 'nullable|numeric|min:0',
             'expiry_date' => 'nullable|date|after:today',
             'sku' => 'required|string|unique:products,sku',
-            'image' => 'nullable|image|max:1024',
+            'cropped_image' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('products', 'public');
+        if ($request->filled('cropped_image')) {
+            $data['image_path'] = $this->storeCroppedImage($request->cropped_image);
         }
 
         Product::create($data);
@@ -60,14 +67,14 @@ class ProductController extends Controller
             'price' => 'nullable|numeric|min:0',
             'expiry_date' => 'nullable|date|after:today',
             'sku' => 'required|string|unique:products,sku,' . $product->id,
-            'image' => 'nullable|image|max:1024',
+            'cropped_image' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('cropped_image')) {
             if ($product->image_path) {
                 Storage::disk('public')->delete($product->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('products', 'public');
+            $data['image_path'] = $this->storeCroppedImage($request->cropped_image);
         }
 
         $product->update($data);
