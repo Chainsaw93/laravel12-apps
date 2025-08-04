@@ -12,21 +12,23 @@
     <table style="width:100%;border-collapse:collapse;" border="1">
         <thead>
             <tr>
-                <th>{{ __('Date') }}</th>
-                <th>{{ __('Inputs') }}</th>
-                <th>{{ __('Outputs') }}</th>
-                <th>{{ __('Input Value') }}</th>
-                <th>{{ __('Output Value') }}</th>
+                <th>{{ __('Type') }}</th>
+                <th>{{ __('Quantity') }}</th>
+                <th>{{ __('CUP Value') }}</th>
+                <th>{{ __('USD Value') }}</th>
+                <th>{{ __('MLC Value') }}</th>
+                <th>{{ __('Total CUP') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach($data as $row)
                 <tr>
-                    <td>{{ $row->date }}</td>
-                    <td>{{ $row->inputs }}</td>
-                    <td>{{ $row->outputs }}</td>
-                    <td>{{ number_format($row->input_value,2) }}</td>
-                    <td>{{ number_format($row->output_value,2) }}</td>
+                    <td>{{ $row->type }}</td>
+                    <td>{{ $row->quantity }}</td>
+                    <td>{{ number_format($row->cup_value,2) }}</td>
+                    <td>{{ number_format($row->usd_value,2) }}</td>
+                    <td>{{ number_format($row->mlc_value,2) }}</td>
+                    <td>{{ number_format($row->total_cup,2) }}</td>
                 </tr>
             @endforeach
         </tbody>
