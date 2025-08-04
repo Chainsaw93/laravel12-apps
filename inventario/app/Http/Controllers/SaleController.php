@@ -37,7 +37,7 @@ class SaleController extends Controller
             'price_per_unit' => 'required|numeric|min:0',
             'payment_method' => ['required', Rule::in(array_map(fn($m) => $m->value, PaymentMethod::cases()))],
             'currency' => 'required|in:CUP,USD,MLC',
-            'exchange_rate_id' => 'nullable|exists:exchange_rates,id',
+            'exchange_rate_id' => 'required_if:currency,USD,MLC|exists:exchange_rates,id',
         ]);
 
         if ($data['currency'] === 'CUP') {
