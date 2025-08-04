@@ -82,7 +82,16 @@ class CategoryController extends Controller
     }
     private function saveCroppedImage(string $imageData): string
     {
-        $image = base64_decode(explode(',', $imageData)[1]);
+        $parts = explode(',', $imageData);
+        if (count($parts) < 2) {
+            abort(422, 'Invalid image data');
+        }
+
+        $image = base64_decode($parts[1]);
+        if ($image === false) {
+            abort(422, 'Invalid image data');
+        }
+
         $path = 'categories/' . uniqid() . '.png';
         Storage::disk('public')->put($path, $image);
         return $path;
