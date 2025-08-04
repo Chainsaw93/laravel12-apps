@@ -34,7 +34,7 @@ class PurchaseController extends Controller
             'supplier_id' => 'required|exists:suppliers,id',
             'warehouse_id' => 'required|exists:warehouses,id',
             'currency' => 'required|in:CUP,USD,MLC',
-            'exchange_rate_id' => 'nullable|exists:exchange_rates,id',
+            'exchange_rate_id' => 'required_if:currency,USD,MLC|exists:exchange_rates,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
