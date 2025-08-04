@@ -12,6 +12,7 @@ class Purchase extends Model
         'currency',
         'exchange_rate_id',
         'total',
+        'user_id',
     ];
 
     public function supplier()

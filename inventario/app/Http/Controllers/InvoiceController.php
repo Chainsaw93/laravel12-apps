@@ -81,7 +81,7 @@ class InvoiceController extends Controller
                 'stock_id' => $stock->id,
                 'type' => MovementType::OUT,
                 'quantity' => $itemData['quantity'],
-                'reason' => 'Invoice ID: ' . $invoice->id,
+                'reason' => 'Venta factura ' . $invoice->id,
                 'user_id' => Auth::id(),
             ]);
             $total += $lineTotal;
