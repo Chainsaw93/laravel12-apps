@@ -69,4 +69,12 @@ Route::middleware([
     Route::resource('sales', SaleController::class)->only(['index', 'create', 'store']);
 
     Route::get('reports', [SalesReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/pdf', [SalesReportController::class, 'pdf'])->name('reports.pdf');
+    Route::get('reports/excel', [SalesReportController::class, 'excel'])->name('reports.excel');
+    Route::prefix('reports/inventory')->name('reports.inventory.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\InventoryReportController::class, 'index'])->name('index');
+        Route::get('generate', [\App\Http\Controllers\InventoryReportController::class, 'generate'])->name('generate');
+        Route::get('chart-data', [\App\Http\Controllers\InventoryReportController::class, 'chartData'])->name('chartData');
+        Route::get('pdf', [\App\Http\Controllers\InventoryReportController::class, 'pdf'])->name('pdf');
+    });
 });
