@@ -82,6 +82,7 @@ class PurchaseController extends Controller
                 'stock_id' => $stock->id,
                 'type' => MovementType::IN,
                 'quantity' => $item['quantity'],
+                'purchase_price' => $costCup,
                 'reason' => 'Compra ' . $purchase->id,
                 'user_id' => Auth::id(),
             ]);

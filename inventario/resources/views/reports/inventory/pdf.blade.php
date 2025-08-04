@@ -15,6 +15,8 @@
                 <th>{{ __('Date') }}</th>
                 <th>{{ __('Inputs') }}</th>
                 <th>{{ __('Outputs') }}</th>
+                <th>{{ __('Input Value') }}</th>
+                <th>{{ __('Output Value') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -23,6 +25,8 @@
                     <td>{{ $row->date }}</td>
                     <td>{{ $row->inputs }}</td>
                     <td>{{ $row->outputs }}</td>
+                    <td>{{ number_format($row->input_value,2) }}</td>
+                    <td>{{ number_format($row->output_value,2) }}</td>
                 </tr>
             @endforeach
         </tbody>

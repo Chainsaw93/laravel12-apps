@@ -60,7 +60,9 @@ class InventoryReportController extends Controller
         return $query
             ->selectRaw('DATE(created_at) as date, '
                 . 'sum(case when type in ("in","transfer_in") then quantity else 0 end) as inputs, '
-                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs')
+                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs, '
+                . 'sum(case when type in ("in","transfer_in") then quantity * purchase_price else 0 end) as input_value, '
+                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity * purchase_price else 0 end) as output_value')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
