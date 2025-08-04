@@ -5,6 +5,7 @@ use App\Models\{Category, Product, Warehouse, Stock, Sale};
 use App\Services\SalesReport;
 use App\Http\Controllers\{
     CategoryController,
+    ProductController,
     WarehouseController,
     StockTransferController,
     SaleController,
@@ -16,7 +17,11 @@ Route::view('/', 'welcome')->name('welcome');
 Route::get('/example', function () {
     $electronics = Category::firstOrCreate(['name' => 'Electronics']);
     $phones = Category::firstOrCreate(['name' => 'Phones', 'parent_id' => $electronics->id]);
-    $product = Product::firstOrCreate(['name' => 'iPhone', 'category_id' => $phones->id]);
+    $product = Product::firstOrCreate([
+        'sku' => 'iphone',
+        'name' => 'iPhone',
+        'category_id' => $phones->id,
+    ]);
 
     $main = Warehouse::firstOrCreate(['name' => 'Main']);
     Warehouse::firstOrCreate(['name' => 'Secondary']);
@@ -49,6 +54,7 @@ Route::middleware([
     Route::view('/dashboard', 'dashboard')->name('dashboard');
 
     Route::resource('categories', CategoryController::class)->except('show');
+    Route::resource('products', ProductController::class)->except('show');
     Route::resource('warehouses', WarehouseController::class)->except('show');
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
