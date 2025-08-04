@@ -10,7 +10,9 @@ class PurchaseItem extends Model
         'purchase_id',
         'product_id',
         'quantity',
-        'cost',
+        'currency_cost',
+        'cost_cup',
+        'exchange_rate_id',
     ];
 
     public function purchase()
@@ -21,5 +23,10 @@ class PurchaseItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function exchangeRate()
+    {
+        return $this->belongsTo(ExchangeRate::class);
     }
 }

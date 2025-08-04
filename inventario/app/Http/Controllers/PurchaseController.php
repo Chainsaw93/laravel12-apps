@@ -71,7 +71,9 @@ class PurchaseController extends Controller
                 'purchase_id' => $purchase->id,
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
-                'cost' => $costCup,
+                'currency_cost' => $item['cost'],
+                'cost_cup' => $costCup,
+                'exchange_rate_id' => $rate?->id,
             ]);
 
             $stock->increment('quantity', $item['quantity']);
