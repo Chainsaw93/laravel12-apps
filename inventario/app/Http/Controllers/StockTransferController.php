@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Product, Stock};
+use App\Models\{Warehouse, Product, Stock, StockMovement};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Enums\MovementType;
 
 class StockTransferController extends Controller
 {
@@ -23,12 +25,38 @@ class StockTransferController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $from = Stock::firstOrCreate(['warehouse_id' => $data['from_warehouse_id'], 'product_id' => $data['product_id']], ['quantity' => 0]);
-        $to = Stock::firstOrCreate(['warehouse_id' => $data['to_warehouse_id'], 'product_id' => $data['product_id']], ['quantity' => 0]);
+        $from = Stock::firstOrCreate(
+            ['warehouse_id' => $data['from_warehouse_id'], 'product_id' => $data['product_id']],
+            ['quantity' => 0]
+        );
+        $to = Stock::firstOrCreate(
+            ['warehouse_id' => $data['to_warehouse_id'], 'product_id' => $data['product_id']],
+            ['quantity' => 0]
+        );
+
+        abort_if(
+            $from->quantity < $data['quantity'],
+            422,
+            'Not enough stock in origin warehouse'
+        );
 
         $from->decrement('quantity', $data['quantity']);
         $to->increment('quantity', $data['quantity']);
 
-        return redirect()->route('warehouses.index');
+        StockMovement::create([
+            'stock_id' => $from->id,
+            'type' => MovementType::OUT,
+            'quantity' => $data['quantity'],
+            'user_id' => Auth::id(),
+        ]);
+
+        StockMovement::create([
+            'stock_id' => $to->id,
+            'type' => MovementType::IN,
+            'quantity' => $data['quantity'],
+            'user_id' => Auth::id(),
+        ]);
+
+        return redirect()->route('warehouses.show', $data['from_warehouse_id']);
     }
 }
