@@ -9,6 +9,7 @@
                 <table class="min-w-full mt-4">
                     <thead>
                         <tr>
+                            <th class="px-4 py-2 text-left">{{ __('Image') }}</th>
                             <th class="px-4 py-2 text-left">{{ __('Name') }}</th>
                             <th class="px-4 py-2 text-left">{{ __('Parent') }}</th>
                             <th class="px-4 py-2"></th>
@@ -17,6 +18,11 @@
                     <tbody>
                         @foreach($categories as $category)
                             <tr class="border-t">
+                                <td class="px-4 py-2">
+                                    @if($category->image_path)
+                                        <img src="{{ Storage::url($category->image_path) }}" class="h-12 w-12 object-cover" />
+                                    @endif
+                                </td>
                                 <td class="px-4 py-2">{{ $category->name }}</td>
                                 <td class="px-4 py-2">{{ $category->parent?->name }}</td>
                                 <td class="px-4 py-2">

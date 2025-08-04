@@ -6,7 +6,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('categories.update', $category) }}" class="space-y-4">
+                <form method="POST" action="{{ route('categories.update', $category) }}" enctype="multipart/form-data" id="category-form" class="space-y-4">
                     @csrf
                     @method('PUT')
                     <div>
@@ -22,8 +22,47 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <x-label for="image" :value="__('Image')" />
+                        <input id="image" name="image" type="file" accept="image/*" class="mt-1 block w-full" />
+                        <img id="image-preview" src="{{ $category->image_path ? Storage::url($category->image_path) : '' }}" class="mt-2 max-h-64 {{ $category->image_path ? '' : 'hidden' }}" />
+                        <input type="hidden" name="image_data" id="image_data">
+                    </div>
                     <x-button>{{ __('Save') }}</x-button>
                 </form>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const imageInput = document.getElementById('image');
+                        const preview = document.getElementById('image-preview');
+                        const imageData = document.getElementById('image_data');
+                        const form = document.getElementById('category-form');
+                        let cropper;
+
+                        if (preview.getAttribute('src')) {
+                            cropper = new Cropper(preview, { aspectRatio: 1 });
+                        }
+
+                        imageInput.addEventListener('change', function (e) {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const url = URL.createObjectURL(file);
+                            preview.src = url;
+                            preview.classList.remove('hidden');
+                            if (cropper) cropper.destroy();
+                            cropper = new Cropper(preview, { aspectRatio: 1 });
+                        });
+
+                        form.addEventListener('submit', function () {
+                            if (cropper) {
+                                const canvas = cropper.getCroppedCanvas();
+                                imageData.value = canvas.toDataURL('image/png');
+                                imageInput.removeAttribute('name');
+                            }
+                        });
+                    });
+                </script>
             </div>
         </div>
     </div>
