@@ -62,6 +62,8 @@
                                 <th class="px-4 py-2">{{ __('Date') }}</th>
                                 <th class="px-4 py-2">{{ __('Inputs') }}</th>
                                 <th class="px-4 py-2">{{ __('Outputs') }}</th>
+                                <th class="px-4 py-2">{{ __('Input Value') }}</th>
+                                <th class="px-4 py-2">{{ __('Output Value') }}</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -70,6 +72,8 @@
                                     <td class="px-4 py-2">{{ $row->date }}</td>
                                     <td class="px-4 py-2">{{ $row->inputs }}</td>
                                     <td class="px-4 py-2">{{ $row->outputs }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->input_value, 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->output_value, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
