@@ -34,11 +34,10 @@ class StockTransferController extends Controller
             ['quantity' => 0]
         );
 
-        abort_if(
-            $from->quantity < $data['quantity'],
-            422,
-            'Not enough stock in origin warehouse'
-        );
+        if ($from->quantity < $data['quantity']) {
+            return back()->withErrors(['quantity' => 'Not enough stock in origin warehouse'])->withInput();
+        }
+
 
         $from->decrement('quantity', $data['quantity']);
         $to->increment('quantity', $data['quantity']);
