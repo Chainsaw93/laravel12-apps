@@ -12,12 +12,14 @@ class StockMovement extends Model
         'stock_id',
         'type',
         'quantity',
+        'purchase_price',
         'reason',
         'user_id',
     ];
 
     protected $casts = [
         'type' => MovementType::class,
+        'purchase_price' => 'decimal:2',
     ];
 
     public function stock(): BelongsTo

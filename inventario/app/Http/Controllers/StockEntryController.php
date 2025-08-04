@@ -39,6 +39,7 @@ class StockEntryController extends Controller
             'stock_id' => $stock->id,
             'type' => MovementType::IN,
             'quantity' => $data['quantity'],
+            'purchase_price' => $data['purchase_price'] ?? null,
             'reason' => $data['reason'] ?? null,
             'description' => $data['description'] ?? null,
             'user_id' => Auth::id(),
