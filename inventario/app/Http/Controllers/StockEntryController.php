@@ -24,6 +24,7 @@ class StockEntryController extends Controller
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'purchase_price' => 'nullable|numeric|min:0',
+            'reason' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
@@ -38,6 +39,7 @@ class StockEntryController extends Controller
             'stock_id' => $stock->id,
             'type' => MovementType::IN,
             'quantity' => $data['quantity'],
+            'reason' => $data['reason'] ?? null,
             'description' => $data['description'] ?? null,
             'user_id' => Auth::id(),
         ]);

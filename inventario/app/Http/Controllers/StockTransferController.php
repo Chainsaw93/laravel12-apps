@@ -25,33 +25,40 @@ class StockTransferController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
+        $fromWarehouse = Warehouse::find($data['from_warehouse_id']);
+        $toWarehouse = Warehouse::find($data['to_warehouse_id']);
+
         $from = Stock::firstOrCreate(
-            ['warehouse_id' => $data['from_warehouse_id'], 'product_id' => $data['product_id']],
+            ['warehouse_id' => $fromWarehouse->id, 'product_id' => $data['product_id']],
             ['quantity' => 0]
         );
         $to = Stock::firstOrCreate(
-            ['warehouse_id' => $data['to_warehouse_id'], 'product_id' => $data['product_id']],
+            ['warehouse_id' => $toWarehouse->id, 'product_id' => $data['product_id']],
             ['quantity' => 0]
         );
 
-        if ($from->quantity < $data['quantity']) {
-            return back()->withErrors(['quantity' => 'Not enough stock in origin warehouse'])->withInput();
-        }
+        abort_if(
+            $from->quantity < $data['quantity'],
+            422,
+            'Not enough stock in origin warehouse'
+        );
 
         $from->decrement('quantity', $data['quantity']);
         $to->increment('quantity', $data['quantity']);
 
         StockMovement::create([
             'stock_id' => $from->id,
-            'type' => MovementType::OUT,
+            'type' => MovementType::TRANSFER_OUT,
             'quantity' => $data['quantity'],
+            'reason' => 'Transfer to warehouse ' . $toWarehouse->name,
             'user_id' => Auth::id(),
         ]);
 
         StockMovement::create([
             'stock_id' => $to->id,
-            'type' => MovementType::IN,
+            'type' => MovementType::TRANSFER_IN,
             'quantity' => $data['quantity'],
+            'reason' => 'Transfer from warehouse ' . $fromWarehouse->name,
             'user_id' => Auth::id(),
         ]);
 

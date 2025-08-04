@@ -10,7 +10,9 @@ use App\Http\Controllers\{
     StockTransferController,
     SaleController,
     SalesReportController,
-    StockEntryController
+    StockEntryController,
+    ClientController,
+    InvoiceController
 };
 
 Route::view('/', 'welcome')->name('welcome');
@@ -57,6 +59,9 @@ Route::middleware([
     Route::resource('categories', CategoryController::class)->except('show');
     Route::resource('products', ProductController::class)->except('show');
     Route::resource('warehouses', WarehouseController::class);
+    Route::resource('clients', ClientController::class);
+    Route::resource('invoices', InvoiceController::class)->only(['index','create','store']);
+
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
         Route::get('create', [StockTransferController::class, 'create'])->name('create');

@@ -1,0 +1,61 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('New Invoice') }}</h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+                <form method="POST" action="{{ route('invoices.store') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <x-label for="client_id" :value="__('Client')" />
+                        <select id="client_id" name="client_id" class="mt-1 block w-full rounded-md" required>
+                            @foreach($clients as $client)
+                                <option value="{{ $client->id }}">{{ $client->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-label for="warehouse_id" :value="__('Warehouse')" />
+                        <select id="warehouse_id" name="warehouse_id" class="mt-1 block w-full rounded-md" required>
+                            @foreach($warehouses as $w)
+                                <option value="{{ $w->id }}">{{ $w->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-label for="currency" :value="__('Currency')" />
+                        <select id="currency" name="currency" class="mt-1 block w-full rounded-md" required>
+                            <option value="CUP">CUP</option>
+                            <option value="USD">USD</option>
+                            <option value="MLC">MLC</option>
+                        </select>
+                    </div>
+                    <div class="border-t pt-4">
+                        <h3 class="font-semibold">{{ __('Items') }}</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <x-label :value="__('Product')" />
+                                <select name="items[0][product_id]" class="mt-1 block w-full rounded-md" required>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-label :value="__('Quantity')" />
+                                <x-input name="items[0][quantity]" type="number" min="1" class="mt-1 block w-full" required />
+                            </div>
+                            <div>
+                                <x-label :value="__('Price')" />
+                                <x-input name="items[0][price]" type="number" step="0.01" min="0" class="mt-1 block w-full" required />
+                            </div>
+                        </div>
+                    </div>
+                    <x-button>{{ __('Save') }}</x-button>
+                </form>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

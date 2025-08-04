@@ -2,82 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Sale, Warehouse, Product, Stock, StockMovement};
-use App\Enums\{PaymentMethod, MovementType};
+use App\Models\{StockMovement, Warehouse, Product};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
 
-
-class SaleController extends Controller
+class InventoryReportController extends Controller
 {
     public function index()
     {
-        $sales = Sale::with(['product', 'warehouse'])->latest()->get();
-        return view('sales.index', compact('sales'));
-    }
-
-    public function create()
-    {
-        return view('sales.create', [
+        return view('reports.inventory.index', [
             'warehouses' => Warehouse::all(),
             'products' => Product::all(),
-            'paymentMethods' => PaymentMethod::cases(),
+            'data' => collect(),
         ]);
     }
 
-    public function store(Request $request)
+    public function generate(Request $request)
     {
-
-        $methods = array_map(fn($m) => $m->value, PaymentMethod::cases());
-        $data = $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-            'price_per_unit' => 'required|numeric|min:0',
-            'payment_method' => ['required', Rule::in($methods)],
+        $data = $this->aggregate($request);
+        return view('reports.inventory.index', [
+            'warehouses' => Warehouse::all(),
+            'products' => Product::all(),
+            'data' => $data,
         ]);
+    }
 
-        $stock = Stock::where('warehouse_id', $data['warehouse_id'])
-            ->where('product_id', $data['product_id'])
-            ->first();
+    public function chartData(Request $request)
+    {
+        return response()->json($this->aggregate($request));
+    }
 
-        if (!$stock || $stock->quantity < $data['quantity']) {
-            return back()->withErrors(['quantity' => 'Insufficient stock'])->withInput();
-        }
+    public function pdf(Request $request)
+    {
+        $data = $this->aggregate($request);
+        $chart = $request->input('chart');
+        return Pdf::loadView('reports.inventory.pdf', [
+            'data' => $data,
+            'chart' => $chart,
+        ])->download('inventory_report.pdf');
+    }
 
-        $sale = Sale::create($data);
+    protected function aggregate(Request $request): Collection
+    {
+        $query = StockMovement::query()
+            ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
+            ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
+            ->when($request->warehouse_id, fn($q, $w) => $q->whereHas('stock', fn($sq) => $sq->where('warehouse_id', $w)))
+            ->when($request->product_id, fn($q, $p) => $q->whereHas('stock', fn($sq) => $sq->where('product_id', $p)))
+            ->when($request->type && in_array($request->type, ['in','out']), function($q, $t) {
+                $types = $t === 'in'
+                    ? ['in', 'transfer_in']
+                    : ['out', 'transfer_out', 'adjustment'];
+                $q->whereIn('type', $types);
+            });
 
-        $stock->decrement('quantity', $data['quantity']);
-
-        StockMovement::create([
-            'stock_id' => $stock->id,
-            'type' => MovementType::OUT,
-            'quantity' => $data['quantity'],
-            'description' => 'Venta ID: ' . $sale->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        $stock = Stock::where('warehouse_id', $data['warehouse_id'])
-            ->where('product_id', $data['product_id'])
-            ->first();
-
-        if (!$stock || $stock->quantity < $data['quantity']) {
-            return back()->withErrors(['quantity' => 'Insufficient stock'])->withInput();
-        }
-
-        $sale = Sale::create($data);
-
-        $stock->decrement('quantity', $data['quantity']);
-
-        StockMovement::create([
-            'stock_id' => $stock->id,
-            'type' => MovementType::OUT,
-            'quantity' => $data['quantity'],
-            'description' => 'Venta ID: ' . $sale->id,
-            'user_id' => Auth::id(),
-        ]);
-
-        return redirect()->route('sales.index');
+        return $query
+            ->selectRaw('DATE(created_at) as date, '
+                . 'sum(case when type in ("in","transfer_in") then quantity else 0 end) as inputs, '
+                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
     }
 }

@@ -50,10 +50,17 @@ class InventoryReportController extends Controller
             ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
             ->when($request->warehouse_id, fn($q, $w) => $q->whereHas('stock', fn($sq) => $sq->where('warehouse_id', $w)))
             ->when($request->product_id, fn($q, $p) => $q->whereHas('stock', fn($sq) => $sq->where('product_id', $p)))
-            ->when($request->type && in_array($request->type, ['in','out']), fn($q, $t) => $q->where('type', $t));
+            ->when($request->type && in_array($request->type, ['in','out']), function($q, $t) {
+                $types = $t === 'in'
+                    ? ['in', 'transfer_in']
+                    : ['out', 'transfer_out', 'adjustment'];
+                $q->whereIn('type', $types);
+            });
 
         return $query
-            ->selectRaw('DATE(created_at) as date, sum(case when type = "in" then quantity else 0 end) as inputs, sum(case when type = "out" then quantity else 0 end) as outputs')
+            ->selectRaw('DATE(created_at) as date, '
+                . 'sum(case when type in ("in","transfer_in") then quantity else 0 end) as inputs, '
+                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs')
             ->groupBy('date')
             ->orderBy('date')
             ->get();

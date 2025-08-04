@@ -12,7 +12,7 @@ class StockMovement extends Model
         'stock_id',
         'type',
         'quantity',
-        'description',
+        'reason',
         'user_id',
     ];
 

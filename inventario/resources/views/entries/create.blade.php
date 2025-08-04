@@ -33,8 +33,8 @@
                         <x-input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" class="mt-1 block w-full" />
                     </div>
                     <div>
-                        <x-label for="description" :value="__('Description')" />
-                        <textarea id="description" name="description" class="mt-1 block w-full rounded-md"></textarea>
+                        <x-label for="reason" :value="__('Reason')" />
+                        <textarea id="reason" name="reason" class="mt-1 block w-full rounded-md"></textarea>
                     </div>
                     <x-button>{{ __('Save') }}</x-button>
                 </form>

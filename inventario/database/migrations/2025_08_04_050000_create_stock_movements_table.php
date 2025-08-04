@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('stock_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['in', 'out']);
+            $table->enum('type', ['in', 'out', 'transfer_in', 'transfer_out', 'adjustment']);
             $table->unsignedInteger('quantity');
-            $table->text('description')->nullable();
+            $table->text('reason')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
