@@ -28,20 +28,20 @@ class StockTransferController extends Controller
         $fromWarehouse = Warehouse::find($data['from_warehouse_id']);
         $toWarehouse = Warehouse::find($data['to_warehouse_id']);
 
-        $from = Stock::firstOrCreate(
-            ['warehouse_id' => $fromWarehouse->id, 'product_id' => $data['product_id']],
-            ['quantity' => 0]
-        );
-        $to = Stock::firstOrCreate(
-            ['warehouse_id' => $toWarehouse->id, 'product_id' => $data['product_id']],
-            ['quantity' => 0]
-        );
+        $from = Stock::where('warehouse_id', $fromWarehouse->id)
+            ->where('product_id', $data['product_id'])
+            ->first();
 
-        if ($from->quantity < $data['quantity']) {
+        if (!$from || $from->quantity < $data['quantity']) {
             return back()->withErrors([
                 'quantity' => 'Not enough stock in origin warehouse',
             ])->withInput();
         }
+
+        $to = Stock::firstOrCreate(
+            ['warehouse_id' => $toWarehouse->id, 'product_id' => $data['product_id']],
+            ['quantity' => 0]
+        );
 
         $from->decrement('quantity', $data['quantity']);
         $to->increment('quantity', $data['quantity']);
