@@ -10,9 +10,27 @@ class ProductController extends Controller
 {
     private function storeCroppedImage(string $image)
     {
-        $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $image));
-        $path = 'products/' . uniqid() . '.jpg';
+        $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $image), true);
+
+        if ($data === false) {
+            throw new \RuntimeException('Invalid image data.');
+        }
+
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if (strlen($data) === 0 || strlen($data) > $maxSize) {
+            throw new \RuntimeException('Invalid image size.');
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->buffer($data);
+        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            throw new \RuntimeException('Unsupported image type.');
+        }
+
+        $extension = $mime === 'image/png' ? 'png' : 'jpg';
+        $path = 'products/' . uniqid() . '.' . $extension;
         Storage::disk('public')->put($path, $data);
+
         return $path;
     }
     public function index()
