@@ -62,6 +62,7 @@ Route::middleware([
     Route::resource('clients', ClientController::class);
     Route::resource('invoices', InvoiceController::class)->only(['index','create','store']);
 
+
     Route::prefix('transfers')->name('transfers.')->group(function () {
         Route::get('create', [StockTransferController::class, 'create'])->name('create');
         Route::post('/', [StockTransferController::class, 'store'])->name('store');

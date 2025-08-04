@@ -25,6 +25,7 @@ class StockEntryController extends Controller
             'quantity' => 'required|integer|min:1',
             'purchase_price' => 'nullable|numeric|min:0',
             'reason' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         $stock = Stock::firstOrCreate(
@@ -39,6 +40,7 @@ class StockEntryController extends Controller
             'type' => MovementType::IN,
             'quantity' => $data['quantity'],
             'reason' => $data['reason'] ?? null,
+            'description' => $data['description'] ?? null,
             'user_id' => Auth::id(),
         ]);
 
