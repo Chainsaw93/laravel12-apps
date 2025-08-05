@@ -40,16 +40,27 @@ class StockTransferController extends Controller
 
         $to = Stock::firstOrCreate(
             ['warehouse_id' => $toWarehouse->id, 'product_id' => $data['product_id']],
-            ['quantity' => 0]
+            ['quantity' => 0, 'average_cost' => 0]
         );
 
+        $cost = $from->average_cost;
+
         $from->decrement('quantity', $data['quantity']);
+
+        $oldQuantity = $to->quantity;
+        $oldCost = $to->average_cost;
+
         $to->increment('quantity', $data['quantity']);
+
+        $newAvg = (($oldQuantity * $oldCost) + ($data['quantity'] * $cost)) / ($oldQuantity + $data['quantity']);
+        $to->update(['average_cost' => $newAvg]);
 
         StockMovement::create([
             'stock_id' => $from->id,
             'type' => MovementType::TRANSFER_OUT,
             'quantity' => $data['quantity'],
+            'purchase_price' => $cost,
+            'currency' => 'CUP',
             'reason' => 'Transfer to warehouse ' . $toWarehouse->name,
             'user_id' => Auth::id(),
         ]);
@@ -58,6 +69,8 @@ class StockTransferController extends Controller
             'stock_id' => $to->id,
             'type' => MovementType::TRANSFER_IN,
             'quantity' => $data['quantity'],
+            'purchase_price' => $cost,
+            'currency' => 'CUP',
             'reason' => 'Transfer from warehouse ' . $fromWarehouse->name,
             'user_id' => Auth::id(),
         ]);

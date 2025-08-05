@@ -33,10 +33,8 @@ class StockEntryController extends Controller
 
         $stock = Stock::firstOrCreate(
             ['warehouse_id' => $data['warehouse_id'], 'product_id' => $data['product_id']],
-            ['quantity' => 0]
+            ['quantity' => 0, 'average_cost' => 0]
         );
-
-        $stock->increment('quantity', $data['quantity']);
 
         $rate = null;
         if ($data['currency'] !== 'CUP') {
@@ -44,6 +42,16 @@ class StockEntryController extends Controller
         } else {
             $data['exchange_rate_id'] = null;
         }
+
+        $costCup = $rate ? $data['purchase_price'] * $rate->rate_to_cup : $data['purchase_price'];
+
+        $oldQuantity = $stock->quantity;
+        $oldCost = $stock->average_cost;
+
+        $stock->increment('quantity', $data['quantity']);
+
+        $newAvg = (($oldQuantity * $oldCost) + ($data['quantity'] * $costCup)) / ($oldQuantity + $data['quantity']);
+        $stock->update(['average_cost' => $newAvg]);
 
         StockMovement::create([
             'stock_id' => $stock->id,

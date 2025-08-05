@@ -32,7 +32,7 @@ Route::get('/example', function () {
 
     Stock::updateOrCreate(
         ['warehouse_id' => $main->id, 'product_id' => $product->id],
-        ['quantity' => 10]
+        ['quantity' => 10, 'average_cost' => 0]
     );
 
     Sale::create([

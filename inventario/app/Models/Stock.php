@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Stock extends Model
 {
-    protected $fillable = ['warehouse_id', 'product_id', 'quantity'];
+    protected $fillable = ['warehouse_id', 'product_id', 'quantity', 'average_cost'];
+
+    protected $casts = [
+        'average_cost' => 'decimal:2',
+    ];
 
     public function warehouse(): BelongsTo
     {
