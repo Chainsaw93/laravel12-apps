@@ -30,11 +30,32 @@
                     </div>
                     <div>
                         <x-label for="purchase_price" :value="__('Purchase Price')" />
-                        <x-input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" class="mt-1 block w-full" />
+                        <x-input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" class="mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <x-label for="currency" :value="__('Currency')" />
+                        <select id="currency" name="currency" class="mt-1 block w-full rounded-md" required>
+                            <option value="CUP">CUP</option>
+                            <option value="USD">USD</option>
+                            <option value="MLC">MLC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <x-label for="exchange_rate_id" :value="__('Exchange Rate')" />
+                        <select id="exchange_rate_id" name="exchange_rate_id" class="mt-1 block w-full rounded-md">
+                            <option value="">{{ __('Select rate') }}</option>
+                            @foreach($rates as $rate)
+                                <option value="{{ $rate->id }}">{{ $rate->currency }} - {{ $rate->rate_to_cup }} ({{ $rate->effective_date->format('Y-m-d') }})</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <x-label for="reason" :value="__('Reason')" />
                         <textarea id="reason" name="reason" class="mt-1 block w-full rounded-md"></textarea>
+                    </div>
+                    <div>
+                        <x-label for="description" :value="__('Description')" />
+                        <textarea id="description" name="description" class="mt-1 block w-full rounded-md"></textarea>
                     </div>
                     <x-button>{{ __('Save') }}</x-button>
                 </form>

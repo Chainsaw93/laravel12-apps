@@ -55,16 +55,20 @@ class InventoryReportController extends Controller
                     ? ['in', 'transfer_in']
                     : ['out', 'transfer_out', 'adjustment'];
                 $q->whereIn('type', $types);
-            });
+            })
+            ->leftJoin('exchange_rates', 'exchange_rates.id', '=', 'stock_movements.exchange_rate_id');
 
         return $query
-            ->selectRaw('DATE(created_at) as date, '
-                . 'sum(case when type in ("in","transfer_in") then quantity else 0 end) as inputs, '
-                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity else 0 end) as outputs, '
-                . 'sum(case when type in ("in","transfer_in") then quantity * purchase_price else 0 end) as input_value, '
-                . 'sum(case when type in ("out","transfer_out","adjustment") then quantity * purchase_price else 0 end) as output_value')
-            ->groupBy('date')
-            ->orderBy('date')
+            ->selectRaw(
+                'stock_movements.type, '
+                . 'sum(stock_movements.quantity) as quantity, '
+                . "sum(case when stock_movements.currency = 'CUP' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as cup_value, "
+                . "sum(case when stock_movements.currency = 'USD' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as usd_value, "
+                . "sum(case when stock_movements.currency = 'MLC' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as mlc_value, "
+                . 'sum(stock_movements.quantity * coalesce(stock_movements.purchase_price,0) * coalesce(exchange_rates.rate_to_cup,1)) as total_cup'
+            )
+            ->groupBy('stock_movements.type')
+            ->orderBy('stock_movements.type')
             ->get();
     }
 }

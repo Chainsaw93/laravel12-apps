@@ -13,7 +13,10 @@ class StockMovement extends Model
         'type',
         'quantity',
         'purchase_price',
+        'currency',
+        'exchange_rate_id',
         'reason',
+        'description',
         'user_id',
     ];
 
@@ -30,5 +33,10 @@ class StockMovement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function exchangeRate(): BelongsTo
+    {
+        return $this->belongsTo(ExchangeRate::class);
     }
 }

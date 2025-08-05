@@ -59,21 +59,23 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-2">{{ __('Date') }}</th>
-                                <th class="px-4 py-2">{{ __('Inputs') }}</th>
-                                <th class="px-4 py-2">{{ __('Outputs') }}</th>
-                                <th class="px-4 py-2">{{ __('Input Value') }}</th>
-                                <th class="px-4 py-2">{{ __('Output Value') }}</th>
+                                <th class="px-4 py-2">{{ __('Type') }}</th>
+                                <th class="px-4 py-2">{{ __('Quantity') }}</th>
+                                <th class="px-4 py-2">{{ __('CUP Value') }}</th>
+                                <th class="px-4 py-2">{{ __('USD Value') }}</th>
+                                <th class="px-4 py-2">{{ __('MLC Value') }}</th>
+                                <th class="px-4 py-2">{{ __('Total CUP') }}</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($data as $row)
                                 <tr>
-                                    <td class="px-4 py-2">{{ $row->date }}</td>
-                                    <td class="px-4 py-2">{{ $row->inputs }}</td>
-                                    <td class="px-4 py-2">{{ $row->outputs }}</td>
-                                    <td class="px-4 py-2">{{ number_format($row->input_value, 2) }}</td>
-                                    <td class="px-4 py-2">{{ number_format($row->output_value, 2) }}</td>
+                                    <td class="px-4 py-2">{{ $row->type }}</td>
+                                    <td class="px-4 py-2">{{ $row->quantity }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->cup_value, 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->usd_value, 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->mlc_value, 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row->total_cup, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -96,16 +98,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const ctx = document.getElementById('inventoryChart').getContext('2d');
-        const labels = @json($data->pluck('date'));
-        const inputs = @json($data->pluck('inputs'));
-        const outputs = @json($data->pluck('outputs'));
+        const labels = @json($data->pluck('type'));
+        const quantities = @json($data->pluck('quantity'));
         const chart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels,
                 datasets: [
-                    { label: 'In', data: inputs, borderColor: 'green' },
-                    { label: 'Out', data: outputs, borderColor: 'red' }
+                    { label: 'Quantity', data: quantities, backgroundColor: 'blue' }
                 ]
             }
         });
