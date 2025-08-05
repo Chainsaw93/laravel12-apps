@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{Purchase, PurchaseItem, Supplier, Warehouse, Product, Stock, StockMovement, ExchangeRate};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Enums\MovementType;
 
 class PurchaseController extends Controller
@@ -48,62 +49,64 @@ class PurchaseController extends Controller
             $data['exchange_rate_id'] = null;
         }
 
-        $purchase = Purchase::create([
-            'supplier_id' => $data['supplier_id'],
-            'warehouse_id' => $data['warehouse_id'],
-            'currency' => $data['currency'],
-            'exchange_rate_id' => $rate?->id,
-            'total' => 0,
-            'user_id' => Auth::id(),
-        ]);
-
-        $total = 0;
-        foreach ($data['items'] as $item) {
-            $stock = Stock::firstOrCreate(
-                ['warehouse_id' => $data['warehouse_id'], 'product_id' => $item['product_id']],
-                ['quantity' => 0, 'average_cost' => 0]
-            );
-
-            $costCup = $rate ? $item['cost'] * $rate->rate_to_cup : $item['cost'];
-            $lineTotal = $item['quantity'] * $costCup;
-
-            PurchaseItem::create([
-                'purchase_id' => $purchase->id,
-                'product_id' => $item['product_id'],
-                'quantity' => $item['quantity'],
-                'currency_cost' => $item['cost'],
-                'cost_cup' => $costCup,
-                'exchange_rate_id' => $rate?->id,
-            ]);
-
-            Product::where('id', $item['product_id'])->update([
-                'cost' => $item['cost'],
-                'currency' => $data['currency'],
-            ]);
-
-            $oldQuantity = $stock->quantity;
-            $oldCost = $stock->average_cost;
-
-            $stock->increment('quantity', $item['quantity']);
-
-            $newAvg = (($oldQuantity * $oldCost) + ($item['quantity'] * $costCup)) / ($oldQuantity + $item['quantity']);
-            $stock->update(['average_cost' => $newAvg]);
-
-            StockMovement::create([
-                'stock_id' => $stock->id,
-                'type' => MovementType::IN,
-                'quantity' => $item['quantity'],
-                'purchase_price' => $item['cost'],
+        DB::transaction(function () use ($data, $rate) {
+            $purchase = Purchase::create([
+                'supplier_id' => $data['supplier_id'],
+                'warehouse_id' => $data['warehouse_id'],
                 'currency' => $data['currency'],
                 'exchange_rate_id' => $rate?->id,
-                'reason' => 'Compra ' . $purchase->id,
+                'total' => 0,
                 'user_id' => Auth::id(),
             ]);
 
-            $total += $lineTotal;
-        }
+            $total = 0;
+            foreach ($data['items'] as $item) {
+                $stock = Stock::firstOrCreate(
+                    ['warehouse_id' => $data['warehouse_id'], 'product_id' => $item['product_id']],
+                    ['quantity' => 0, 'average_cost' => 0]
+                );
 
-        $purchase->update(['total' => $total]);
+                $costCup = $rate ? $item['cost'] * $rate->rate_to_cup : $item['cost'];
+                $lineTotal = $item['quantity'] * $costCup;
+
+                PurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'currency_cost' => $item['cost'],
+                    'cost_cup' => $costCup,
+                    'exchange_rate_id' => $rate?->id,
+                ]);
+
+                Product::where('id', $item['product_id'])->update([
+                    'cost' => $item['cost'],
+                    'currency' => $data['currency'],
+                ]);
+
+                $oldQuantity = $stock->quantity;
+                $oldCost = $stock->average_cost;
+
+                $stock->increment('quantity', $item['quantity']);
+
+                $newAvg = (($oldQuantity * $oldCost) + ($item['quantity'] * $costCup)) / ($oldQuantity + $item['quantity']);
+                $stock->update(['average_cost' => $newAvg]);
+
+                StockMovement::create([
+                    'stock_id' => $stock->id,
+                    'type' => MovementType::IN,
+                    'quantity' => $item['quantity'],
+                    'purchase_price' => $item['cost'],
+                    'currency' => $data['currency'],
+                    'exchange_rate_id' => $rate?->id,
+                    'reason' => 'Compra ' . $purchase->id,
+                    'user_id' => Auth::id(),
+                ]);
+
+                $total += $lineTotal;
+            }
+
+            $purchase->update(['total' => $total]);
+        });
 
         return redirect()->route('purchases.index');
     }
