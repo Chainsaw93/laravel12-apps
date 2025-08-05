@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{Invoice, InvoiceItem, Client, Warehouse, Product, Stock, StockMovement, ExchangeRate};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Enums\MovementType;
 use App\Enums\PaymentMethod;
 
@@ -50,54 +51,59 @@ class InvoiceController extends Controller
             $data['exchange_rate_id'] = null;
         }
 
-        $invoice = Invoice::create([
-            'client_id' => $data['client_id'],
-            'warehouse_id' => $data['warehouse_id'],
-            'user_id' => Auth::id(),
-            'currency' => $data['currency'],
-            'exchange_rate_id' => $rate?->id,
-            'total_amount' => 0,
-            'status' => 'issued',
-            'payment_method' => $data['payment_method'],
-        ]);
+        try {
+            DB::transaction(function () use ($data, $rate) {
+                $invoice = Invoice::create([
+                    'client_id' => $data['client_id'],
+                    'warehouse_id' => $data['warehouse_id'],
+                    'user_id' => Auth::id(),
+                    'currency' => $data['currency'],
+                    'exchange_rate_id' => $rate?->id,
+                    'total_amount' => 0,
+                    'status' => 'issued',
+                    'payment_method' => $data['payment_method'],
+                ]);
 
-        $total = 0;
-        foreach ($data['items'] as $itemData) {
-            $stock = Stock::where('warehouse_id', $data['warehouse_id'])
-                ->where('product_id', $itemData['product_id'])
-                ->first();
-            if (!$stock || $stock->quantity < $itemData['quantity']) {
-                $invoice->delete();
-                return back()->withErrors(['items' => 'Insufficient stock'])->withInput();
-            }
-            $priceCup = $rate ? $itemData['price'] * $rate->rate_to_cup : $itemData['price'];
-            $lineTotal = $itemData['quantity'] * $priceCup;
-            $cost = $stock->average_cost;
-            $lineCost = $itemData['quantity'] * $cost;
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'product_id' => $itemData['product_id'],
-                'quantity' => $itemData['quantity'],
-                'price' => $priceCup,
-                'currency_price' => $itemData['price'],
-                'total' => $lineTotal,
-                'cost' => $cost,
-                'total_cost' => $lineCost,
-            ]);
-            $stock->decrement('quantity', $itemData['quantity']);
-            StockMovement::create([
-                'stock_id' => $stock->id,
-                'type' => MovementType::OUT,
-                'quantity' => $itemData['quantity'],
-                'purchase_price' => $cost,
-                'currency' => 'CUP',
-                'reason' => 'Venta factura ' . $invoice->id,
-                'user_id' => Auth::id(),
-            ]);
-            $total += $lineTotal;
+                $total = 0;
+                foreach ($data['items'] as $itemData) {
+                    $stock = Stock::where('warehouse_id', $data['warehouse_id'])
+                        ->where('product_id', $itemData['product_id'])
+                        ->first();
+                    if (!$stock || $stock->quantity < $itemData['quantity']) {
+                        throw new \Exception('Insufficient stock');
+                    }
+                    $priceCup = $rate ? $itemData['price'] * $rate->rate_to_cup : $itemData['price'];
+                    $lineTotal = $itemData['quantity'] * $priceCup;
+                    $cost = $stock->average_cost;
+                    $lineCost = $itemData['quantity'] * $cost;
+                    InvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $itemData['product_id'],
+                        'quantity' => $itemData['quantity'],
+                        'price' => $priceCup,
+                        'currency_price' => $itemData['price'],
+                        'total' => $lineTotal,
+                        'cost' => $cost,
+                        'total_cost' => $lineCost,
+                    ]);
+                    $stock->decrement('quantity', $itemData['quantity']);
+                    StockMovement::create([
+                        'stock_id' => $stock->id,
+                        'type' => MovementType::OUT,
+                        'quantity' => $itemData['quantity'],
+                        'purchase_price' => $cost,
+                        'currency' => 'CUP',
+                        'reason' => 'Venta factura ' . $invoice->id,
+                        'user_id' => Auth::id(),
+                    ]);
+                    $total += $lineTotal;
+                }
+
+                $invoice->update(['total_amount' => $total]);
+            });
+        } catch (\Throwable $e) {
+            return back()->withErrors(['items' => $e->getMessage()])->withInput();
         }
-
-        $invoice->update(['total_amount' => $total]);
 
         return redirect()->route('sales.index');
     }
