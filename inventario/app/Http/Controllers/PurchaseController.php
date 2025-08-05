@@ -76,6 +76,11 @@ class PurchaseController extends Controller
                 'exchange_rate_id' => $rate?->id,
             ]);
 
+            Product::where('id', $item['product_id'])->update([
+                'cost' => $item['cost'],
+                'currency' => $data['currency'],
+            ]);
+
             $oldQuantity = $stock->quantity;
             $oldCost = $stock->average_cost;
 

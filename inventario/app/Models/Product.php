@@ -15,6 +15,8 @@ class Product extends Model
         'image_path',
         'expiry_date',
         'price',
+        'cost',
+        'currency',
         'sku',
     ];
 
@@ -26,5 +28,15 @@ class Product extends Model
     public function stocks(): HasMany
     {
         return $this->hasMany(Stock::class);
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function invoiceItems(): HasMany
+    {
+        return $this->hasMany(InvoiceItem::class);
     }
 }
