@@ -22,6 +22,14 @@ class InventoryReportController extends Controller
 
     public function generate(Request $request)
     {
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+            'type' => ['nullable', 'in:in,out'],
+        ]);
+
         $data = $this->aggregate($request);
         return view('reports.inventory.index', [
             'warehouses' => Warehouse::all(),
@@ -33,11 +41,27 @@ class InventoryReportController extends Controller
 
     public function chartData(Request $request)
     {
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+            'type' => ['nullable', 'in:in,out'],
+        ]);
+
         return response()->json($this->aggregate($request));
     }
 
     public function pdf(Request $request)
     {
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+            'type' => ['nullable', 'in:in,out'],
+        ]);
+
         $data = $this->aggregate($request);
         $chart = $request->input('chart');
         return Pdf::loadView('reports.inventory.pdf', [
