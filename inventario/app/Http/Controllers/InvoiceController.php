@@ -116,6 +116,8 @@ class InvoiceController extends Controller
                                 'currency' => 'CUP',
                                 'exchange_rate_id' => null,
                                 'total_cost_cup' => $unitCost * $take,
+                                'reference_type' => Invoice::class,
+                                'reference_id' => $invoice->id,
                                 'user_id' => Auth::id(),
                             ]);
                             $remaining -= $take;
@@ -151,6 +153,8 @@ class InvoiceController extends Controller
                                 'currency' => 'CUP',
                                 'exchange_rate_id' => null,
                                 'total_cost_cup' => $unitCost * $take,
+                                'reference_type' => Invoice::class,
+                                'reference_id' => $invoice->id,
                                 'user_id' => Auth::id(),
                             ]);
                             $remaining -= $take;

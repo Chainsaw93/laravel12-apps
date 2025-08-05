@@ -72,6 +72,11 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        if ($category->children()->exists() || $category->products()->exists()) {
+            return redirect()->route('categories.index')
+                ->withErrors(['category' => __('This category has child categories or products and cannot be deleted.')]);
+        }
+
         if ($category->image_path) {
             Storage::disk('public')->delete($category->image_path);
         }

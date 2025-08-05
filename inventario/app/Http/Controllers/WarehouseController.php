@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Stock, Category, Product};
+use App\Models\{Warehouse, Stock, Category, Product, Sale, Invoice, Purchase};
 use Illuminate\Http\Request;
 
 class WarehouseController extends Controller
@@ -40,9 +40,15 @@ class WarehouseController extends Controller
 
     public function destroy(Warehouse $warehouse)
     {
-        if (Stock::where('warehouse_id', $warehouse->id)->exists()) {
+        $hasDependencies =
+            Stock::where('warehouse_id', $warehouse->id)->exists() ||
+            Sale::where('warehouse_id', $warehouse->id)->exists() ||
+            Invoice::where('warehouse_id', $warehouse->id)->exists() ||
+            Purchase::where('warehouse_id', $warehouse->id)->exists();
+
+        if ($hasDependencies) {
             return redirect()->route('warehouses.index')
-                ->withErrors(['warehouse' => __('This warehouse has stock and cannot be deleted.')]);
+                ->withErrors(['warehouse' => __('This warehouse has associated records and cannot be deleted.')]);
         }
 
         $warehouse->delete();

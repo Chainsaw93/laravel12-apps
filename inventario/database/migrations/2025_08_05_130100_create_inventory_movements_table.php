@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('currency', 3)->default('CUP');
             $table->foreignId('exchange_rate_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('total_cost_cup', 10, 2);
-            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->nullableMorphs('reference');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
