@@ -22,6 +22,32 @@ This repository contains a minimal Laravel 12 application demonstrating an inven
    ```
 5. Visit `/register` to create an account or `/login` if one already exists. You can still visit `/example` to seed demo data and see a daily sales total in CUP.
 
+## Production Deployment
+
+1. Copy the example environment file and update the values for your server.
+   ```bash
+   cp .env.example .env
+   php artisan key:generate --force
+   ```
+2. Install production dependencies and compile assets.
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm install && npm run build
+   ```
+3. Run database migrations with the `--force` flag and cache configuration.
+   ```bash
+   php artisan migrate --force
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+4. Ensure the web server serves the `public/` directory and that the `storage/` and `bootstrap/cache/` directories are writable by the web user.
+5. Start the queue worker and scheduler if your application uses them.
+   ```bash
+   php artisan queue:work
+   * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+   ```
+
 ## Exchange Rates
 
 Access the *Exchange Rates* section of the application to register new rates manually. Provide the currency, the value of one unit in CUP and the date from which the rate is effective. Each sale or invoice keeps a reference to the rate used so historical operations preserve their original conversion.
