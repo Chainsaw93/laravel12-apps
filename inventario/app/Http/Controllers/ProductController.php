@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Product, Category};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\{Storage, Validator};
 
 class ProductController extends Controller
 {
@@ -16,20 +16,20 @@ class ProductController extends Controller
             throw new \RuntimeException('Invalid image data.');
         }
 
-        $maxSize = 5 * 1024 * 1024; // 5MB
-        if (strlen($data) === 0 || strlen($data) > $maxSize) {
-            throw new \RuntimeException('Invalid image size.');
-        }
+        $tmpPath = tempnam(sys_get_temp_dir(), 'img');
+        file_put_contents($tmpPath, $data);
 
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->buffer($data);
-        if (!in_array($mime, ['image/jpeg', 'image/png'], true)) {
-            throw new \RuntimeException('Unsupported image type.');
-        }
+        Validator::make([
+            'image' => new \Illuminate\Http\File($tmpPath),
+        ], [
+            'image' => 'required|image|mimes:jpeg,png|max:5120',
+        ])->validate();
 
+        $mime = mime_content_type($tmpPath);
         $extension = $mime === 'image/png' ? 'png' : 'jpg';
         $path = 'products/' . uniqid() . '.' . $extension;
         Storage::disk('public')->put($path, $data);
+        unlink($tmpPath);
 
         return $path;
     }
@@ -102,6 +102,16 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if (
+            $product->stocks()->exists() ||
+            $product->batches()->exists() ||
+            $product->purchaseItems()->exists() ||
+            $product->invoiceItems()->exists()
+        ) {
+            return redirect()->route('products.index')
+                ->withErrors(['product' => __('This product has related records and cannot be deleted.')]);
+        }
+
         if ($product->image_path) {
             Storage::disk('public')->delete($product->image_path);
         }
