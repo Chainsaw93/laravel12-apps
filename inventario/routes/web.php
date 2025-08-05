@@ -10,6 +10,7 @@ use App\Http\Controllers\{
     StockTransferController,
     SalesReportController,
     StockEntryController,
+    StockAdjustmentController,
     ClientController,
     InvoiceController,
     ExchangeRateController,
@@ -73,6 +74,9 @@ Route::middleware([
 
     Route::get('entries/create', [StockEntryController::class, 'create'])->name('entries.create');
     Route::post('entries', [StockEntryController::class, 'store'])->name('entries.store');
+
+    Route::get('adjustments/create', [StockAdjustmentController::class, 'create'])->name('adjustments.create');
+    Route::post('adjustments', [StockAdjustmentController::class, 'store'])->name('adjustments.store');
 
     Route::resource('sales', InvoiceController::class)->only(['index','create','store']);
     Route::post('sales/{invoice}/returns', [InvoiceController::class, 'returnItems'])->name('sales.returns');
