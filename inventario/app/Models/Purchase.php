@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Purchase extends Model
 {
@@ -30,8 +31,13 @@ class Purchase extends Model
         return $this->belongsTo(ExchangeRate::class);
     }
 
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function indirectCosts(): HasMany
+    {
+        return $this->hasMany(IndirectCost::class);
     }
 }
