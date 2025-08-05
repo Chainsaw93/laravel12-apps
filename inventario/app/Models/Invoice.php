@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Enums\PaymentMethod;
 
 class Invoice extends Model
 {
@@ -16,6 +17,11 @@ class Invoice extends Model
         'exchange_rate_id',
         'total_amount',
         'status',
+        'payment_method',
+    ];
+
+    protected $casts = [
+        'payment_method' => PaymentMethod::class,
     ];
 
     public function client(): BelongsTo

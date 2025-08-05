@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\{Category, Product, Warehouse, Invoice, InvoiceItem, ExchangeRate, User, Client};
+use App\Enums\PaymentMethod;
 use App\Services\SalesReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -44,6 +45,7 @@ class SalesReportTest extends TestCase
             'exchange_rate_id' => $rate1->id,
             'total_amount' => 0,
             'status' => 'issued',
+            'payment_method' => PaymentMethod::CASH_USD,
         ]);
         InvoiceItem::create([
             'invoice_id' => $invoice1->id,
@@ -63,6 +65,7 @@ class SalesReportTest extends TestCase
             'exchange_rate_id' => $rate2->id,
             'total_amount' => 0,
             'status' => 'issued',
+            'payment_method' => PaymentMethod::CASH_USD,
         ]);
         InvoiceItem::create([
             'invoice_id' => $invoice2->id,

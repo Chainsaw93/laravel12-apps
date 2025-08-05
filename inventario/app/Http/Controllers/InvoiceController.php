@@ -6,6 +6,7 @@ use App\Models\{Invoice, InvoiceItem, Client, Warehouse, Product, Stock, StockMo
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\MovementType;
+use App\Enums\PaymentMethod;
 
 class InvoiceController extends Controller
 {
@@ -25,6 +26,7 @@ class InvoiceController extends Controller
             'warehouses' => Warehouse::all(),
             'products' => Product::all(),
             'rates' => $rates,
+            'paymentMethods' => PaymentMethod::cases(),
         ]);
     }
 
@@ -35,6 +37,7 @@ class InvoiceController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'currency' => 'required|in:CUP,USD,MLC',
             'exchange_rate_id' => 'nullable|exists:exchange_rates,id',
+            'payment_method' => 'required|in:' . implode(',', array_map(fn($m) => $m->value, PaymentMethod::cases())),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -55,6 +58,7 @@ class InvoiceController extends Controller
             'exchange_rate_id' => $rate?->id,
             'total_amount' => 0,
             'status' => 'issued',
+            'payment_method' => $data['payment_method'],
         ]);
 
         $total = 0;

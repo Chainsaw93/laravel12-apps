@@ -33,5 +33,28 @@
             @endforeach
         </tbody>
     </table>
+    @if(isset($valuation) && $valuation->isNotEmpty())
+    <h2>{{ __('Valuation by Warehouse') }}</h2>
+    <table style="width:100%;border-collapse:collapse;" border="1">
+        <thead>
+            <tr>
+                <th>{{ __('Warehouse') }}</th>
+                <th>{{ __('Inventory Value') }}</th>
+                <th>{{ __('Average Cost') }}</th>
+                <th>{{ __('Profit Margin') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($valuation as $row)
+                <tr>
+                    <td>{{ $row['warehouse'] }}</td>
+                    <td>{{ number_format($row['inventory_value'],2) }}</td>
+                    <td>{{ number_format($row['average_cost'],2) }}</td>
+                    <td>{{ number_format($row['profit_margin'] * 100,2) }}%</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
 </body>
 </html>

@@ -6,7 +6,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('invoices.store') }}" class="space-y-4">
+                <form method="POST" action="{{ route('sales.store') }}" class="space-y-4">
                     @csrf
                     <div>
                         <x-label for="client_id" :value="__('Client')" />
@@ -30,6 +30,14 @@
                             @foreach(['CUP','USD','MLC'] as $cur)
                                 @php $rate = $rates[$cur] ?? null; @endphp
                                 <option value="{{ $cur }}" data-rate="{{ $rate?->rate_to_cup }}" data-id="{{ $rate?->id }}">{{ $cur }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <x-label for="payment_method" :value="__('Payment Method')" />
+                        <select id="payment_method" name="payment_method" class="mt-1 block w-full rounded-md" required>
+                            @foreach($paymentMethods as $method)
+                                <option value="{{ $method->value }}">{{ ucfirst(str_replace('_',' ', $method->value)) }}</option>
                             @endforeach
                         </select>
                     </div>

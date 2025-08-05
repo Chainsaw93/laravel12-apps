@@ -13,6 +13,7 @@
                             <th class="border px-2 py-1">{{ __('ID') }}</th>
                             <th class="border px-2 py-1">{{ __('Client') }}</th>
                             <th class="border px-2 py-1">{{ __('Total') }}</th>
+                            <th class="border px-2 py-1">{{ __('Payment Method') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -21,6 +22,7 @@
                                 <td class="border px-2 py-1">{{ $invoice->id }}</td>
                                 <td class="border px-2 py-1">{{ $invoice->client->name }}</td>
                                 <td class="border px-2 py-1">{{ $invoice->total_amount }} {{ $invoice->currency }}</td>
+                                <td class="border px-2 py-1">{{ $invoice->payment_method->value }}</td>
                             </tr>
                         @endforeach
                     </tbody>
