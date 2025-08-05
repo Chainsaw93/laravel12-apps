@@ -43,7 +43,25 @@ class StockTransferController extends Controller
             ['quantity' => 0, 'average_cost' => 0]
         );
 
-        $cost = $from->average_cost;
+        $costCup = $from->average_cost;
+
+        $currency = 'CUP';
+        $exchangeRateId = null;
+        $purchasePrice = $costCup;
+
+        $lastMovement = StockMovement::where('stock_id', $from->id)
+            ->whereNotNull('purchase_price')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($lastMovement && $lastMovement->currency !== 'CUP' && $lastMovement->exchange_rate_id) {
+            $currency = $lastMovement->currency;
+            $exchangeRateId = $lastMovement->exchange_rate_id;
+            $rate = $lastMovement->exchangeRate;
+            if ($rate) {
+                $purchasePrice = $costCup / $rate->rate_to_cup;
+            }
+        }
 
         $from->decrement('quantity', $data['quantity']);
 
@@ -52,15 +70,16 @@ class StockTransferController extends Controller
 
         $to->increment('quantity', $data['quantity']);
 
-        $newAvg = (($oldQuantity * $oldCost) + ($data['quantity'] * $cost)) / ($oldQuantity + $data['quantity']);
+        $newAvg = (($oldQuantity * $oldCost) + ($data['quantity'] * $costCup)) / ($oldQuantity + $data['quantity']);
         $to->update(['average_cost' => $newAvg]);
 
         StockMovement::create([
             'stock_id' => $from->id,
             'type' => MovementType::TRANSFER_OUT,
             'quantity' => $data['quantity'],
-            'purchase_price' => $cost,
-            'currency' => 'CUP',
+            'purchase_price' => $purchasePrice,
+            'currency' => $currency,
+            'exchange_rate_id' => $exchangeRateId,
             'reason' => 'Transfer to warehouse ' . $toWarehouse->name,
             'user_id' => Auth::id(),
         ]);
@@ -69,8 +88,9 @@ class StockTransferController extends Controller
             'stock_id' => $to->id,
             'type' => MovementType::TRANSFER_IN,
             'quantity' => $data['quantity'],
-            'purchase_price' => $cost,
-            'currency' => 'CUP',
+            'purchase_price' => $purchasePrice,
+            'currency' => $currency,
+            'exchange_rate_id' => $exchangeRateId,
             'reason' => 'Transfer from warehouse ' . $fromWarehouse->name,
             'user_id' => Auth::id(),
         ]);
