@@ -24,6 +24,7 @@ class StockTransferController extends Controller
             'from_warehouse_id' => 'required|exists:warehouses,id',
             'to_warehouse_id' => 'required|exists:warehouses,id|different:from_warehouse_id',
             'product_id' => 'required|exists:products,id',
+            'unit_id' => 'nullable|exists:units,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
@@ -32,12 +33,17 @@ class StockTransferController extends Controller
 
         try {
             DB::transaction(function () use ($data, $fromWarehouse, $toWarehouse) {
+                $product = Product::find($data['product_id']);
+                $unitId = $data['unit_id'] ?? $product->unit_id;
+                $factor = $product->getConversionFactor($unitId);
+                $baseQty = $data['quantity'] * $factor;
+
                 $from = Stock::where('warehouse_id', $fromWarehouse->id)
                     ->where('product_id', $data['product_id'])
                     ->lockForUpdate()
                     ->first();
 
-                if (!$from || $from->quantity < $data['quantity']) {
+                if (!$from || $from->quantity < $baseQty) {
                     throw ValidationException::withMessages([
                         'quantity' => 'Not enough stock in origin warehouse',
                     ]);
@@ -75,7 +81,7 @@ class StockTransferController extends Controller
                     $rate = $lastMovement->exchangeRate;
                 }
 
-                $remaining = $data['quantity'];
+                $remaining = $baseQty;
                 $costAccum = 0;
 
                 if ($method === 'average') {
@@ -191,26 +197,25 @@ class StockTransferController extends Controller
                     }
                 }
 
-                $unitTransferredCost = $costAccum / $data['quantity'];
+                $unitTransferredCost = $costAccum / $baseQty;
                 $purchasePrice = $unitTransferredCost;
                 if ($rate) {
                     $purchasePrice = $unitTransferredCost / $rate->rate_to_cup;
                 }
-
-                $from->decrement('quantity', $data['quantity']);
+                $from->decrement('quantity', $baseQty);
 
                 $oldQuantity = $to->quantity;
                 $oldCost = $to->average_cost;
 
-                $to->increment('quantity', $data['quantity']);
+                $to->increment('quantity', $baseQty);
 
-                $newAvg = (($oldQuantity * $oldCost) + $costAccum) / ($oldQuantity + $data['quantity']);
+                $newAvg = (($oldQuantity * $oldCost) + $costAccum) / ($oldQuantity + $baseQty);
                 $to->update(['average_cost' => $newAvg]);
 
                 StockMovement::create([
                     'stock_id' => $from->id,
                     'type' => MovementType::TRANSFER_OUT,
-                    'quantity' => $data['quantity'],
+                    'quantity' => $baseQty,
                     'purchase_price' => $purchasePrice,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,
@@ -221,7 +226,7 @@ class StockTransferController extends Controller
                 StockMovement::create([
                     'stock_id' => $to->id,
                     'type' => MovementType::TRANSFER_IN,
-                    'quantity' => $data['quantity'],
+                    'quantity' => $baseQty,
                     'purchase_price' => $purchasePrice,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,

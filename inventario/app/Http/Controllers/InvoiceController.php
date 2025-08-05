@@ -41,6 +41,7 @@ class InvoiceController extends Controller
             'payment_method' => 'required|in:' . implode(',', array_map(fn($m) => $m->value, PaymentMethod::cases())),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id' => 'nullable|exists:units,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
         ]);
@@ -77,17 +78,23 @@ class InvoiceController extends Controller
                 $method = $warehouse->valuation_method ?? 'average';
 
                 foreach ($data['items'] as $itemData) {
+                    $product = Product::find($itemData['product_id']);
+                    $unitId = $itemData['unit_id'] ?? $product->unit_id;
+                    $factor = $product->getConversionFactor($unitId);
+                    $baseQty = $itemData['quantity'] * $factor;
+
                     $stock = Stock::where('warehouse_id', $data['warehouse_id'])
                         ->where('product_id', $itemData['product_id'])
                         ->first();
-                    if (!$stock || $stock->quantity < $itemData['quantity']) {
+                    if (!$stock || $stock->quantity < $baseQty) {
                         throw new \Exception('Insufficient stock');
                     }
 
-                    $priceCup = $rate ? $itemData['price'] * $rate->rate_to_cup : $itemData['price'];
-                    $lineTotal = $itemData['quantity'] * $priceCup;
+                    $currencyPrice = $itemData['price'] / $factor;
+                    $priceCup = $rate ? $currencyPrice * $rate->rate_to_cup : $currencyPrice;
+                    $lineTotal = $baseQty * $priceCup;
 
-                    $remaining = $itemData['quantity'];
+                    $remaining = $baseQty;
                     $costAccum = 0;
                     if ($method === 'average') {
                         $unitCost = $stock->average_cost;
@@ -162,25 +169,26 @@ class InvoiceController extends Controller
                         if ($remaining > 0) {
                             throw new \Exception('Insufficient stock');
                         }
-                        $unitCost = $costAccum / $itemData['quantity'];
+                        $unitCost = $costAccum / $baseQty;
                     }
 
                     InvoiceItem::create([
                         'invoice_id' => $invoice->id,
                         'product_id' => $itemData['product_id'],
-                        'quantity' => $itemData['quantity'],
+                        'unit_id' => $unitId,
+                        'quantity' => $baseQty,
                         'price' => $priceCup,
-                        'currency_price' => $itemData['price'],
+                        'currency_price' => $currencyPrice,
                         'total' => $lineTotal,
                         'cost' => $unitCost,
                         'total_cost' => $costAccum,
                     ]);
 
-                    $stock->decrement('quantity', $itemData['quantity']);
+                    $stock->decrement('quantity', $baseQty);
                     StockMovement::create([
                         'stock_id' => $stock->id,
                         'type' => MovementType::OUT,
-                        'quantity' => $itemData['quantity'],
+                        'quantity' => $baseQty,
                         'purchase_price' => $unitCost,
                         'currency' => 'CUP',
                         'reason' => 'Venta factura ' . $invoice->id,

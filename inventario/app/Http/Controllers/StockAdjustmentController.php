@@ -24,26 +24,32 @@ class StockAdjustmentController extends Controller
         $data = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'product_id' => 'required|exists:products,id',
+            'unit_id' => 'nullable|exists:units,id',
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string',
             'description' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($data) {
+            $product = Product::find($data['product_id']);
+            $unitId = $data['unit_id'] ?? $product->unit_id;
+            $factor = $product->getConversionFactor($unitId);
+            $baseQty = $data['quantity'] * $factor;
+
             $warehouse = Warehouse::find($data['warehouse_id']);
             $stock = Stock::where('warehouse_id', $warehouse->id)
                 ->where('product_id', $data['product_id'])
                 ->lockForUpdate()
                 ->first();
 
-            if (!$stock || $stock->quantity < $data['quantity']) {
+            if (!$stock || $stock->quantity < $baseQty) {
                 throw ValidationException::withMessages([
                     'quantity' => 'Not enough stock',
                 ]);
             }
 
             $method = $warehouse->valuation_method ?? 'average';
-            $remaining = $data['quantity'];
+            $remaining = $baseQty;
             $costAccum = 0;
 
             if ($method === 'average') {
@@ -112,15 +118,15 @@ class StockAdjustmentController extends Controller
                         'quantity' => 'Not enough stock',
                     ]);
                 }
-                $unitCost = $costAccum / $data['quantity'];
+                $unitCost = $costAccum / $baseQty;
             }
 
-            $stock->decrement('quantity', $data['quantity']);
+            $stock->decrement('quantity', $baseQty);
 
             StockMovement::create([
                 'stock_id' => $stock->id,
                 'type' => MovementType::ADJUSTMENT_NEG,
-                'quantity' => $data['quantity'],
+                'quantity' => $baseQty,
                 'purchase_price' => $unitCost,
                 'currency' => 'CUP',
                 'reason' => $data['reason'],
