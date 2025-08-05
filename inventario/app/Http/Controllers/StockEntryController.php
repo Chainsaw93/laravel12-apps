@@ -24,6 +24,7 @@ class StockEntryController extends Controller
         $data = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'product_id' => 'required|exists:products,id',
+            'unit_id' => 'nullable|exists:units,id',
             'quantity' => 'required|integer|min:1',
             'purchase_price' => 'required|numeric|min:0',
             'currency' => 'required|in:CUP,USD,MLC',
@@ -33,6 +34,11 @@ class StockEntryController extends Controller
         ]);
 
         DB::transaction(function () use ($data) {
+            $product = Product::find($data['product_id']);
+            $unitId = $data['unit_id'] ?? $product->unit_id;
+            $factor = $product->getConversionFactor($unitId);
+            $baseQty = $data['quantity'] * $factor;
+
             $stock = Stock::firstOrCreate(
                 ['warehouse_id' => $data['warehouse_id'], 'product_id' => $data['product_id']],
                 ['quantity' => 0, 'average_cost' => 0]
@@ -45,21 +51,22 @@ class StockEntryController extends Controller
                 $data['exchange_rate_id'] = null;
             }
 
-            $costCup = $rate ? $data['purchase_price'] * $rate->rate_to_cup : $data['purchase_price'];
+            $currencyPrice = $data['purchase_price'] / $factor;
+            $costCup = $rate ? $currencyPrice * $rate->rate_to_cup : $currencyPrice;
 
             $oldQuantity = $stock->quantity;
             $oldCost = $stock->average_cost;
 
-            $stock->increment('quantity', $data['quantity']);
+            $stock->increment('quantity', $baseQty);
 
-            $newAvg = (($oldQuantity * $oldCost) + ($data['quantity'] * $costCup)) / ($oldQuantity + $data['quantity']);
+            $newAvg = (($oldQuantity * $oldCost) + ($baseQty * $costCup)) / ($oldQuantity + $baseQty);
             $stock->update(['average_cost' => $newAvg]);
 
             StockMovement::create([
                 'stock_id' => $stock->id,
                 'type' => MovementType::IN,
-                'quantity' => $data['quantity'],
-                'purchase_price' => $data['purchase_price'],
+                'quantity' => $baseQty,
+                'purchase_price' => $currencyPrice,
                 'currency' => $data['currency'],
                 'exchange_rate_id' => $rate?->id,
                 'reason' => $data['reason'] ?? null,
@@ -70,11 +77,11 @@ class StockEntryController extends Controller
             $batch = Batch::create([
                 'product_id' => $data['product_id'],
                 'warehouse_id' => $data['warehouse_id'],
-                'quantity_remaining' => $data['quantity'],
+                'quantity_remaining' => $baseQty,
                 'unit_cost_cup' => $costCup,
                 'currency' => $data['currency'],
                 'indirect_cost' => 0,
-                'total_cost_cup' => $costCup * $data['quantity'],
+                'total_cost_cup' => $costCup * $baseQty,
                 'received_at' => now(),
             ]);
 
@@ -83,12 +90,12 @@ class StockEntryController extends Controller
                 'product_id' => $data['product_id'],
                 'warehouse_id' => $data['warehouse_id'],
                 'movement_type' => MovementType::IN,
-                'quantity' => $data['quantity'],
+                'quantity' => $baseQty,
                 'unit_cost_cup' => $costCup,
                 'indirect_cost_unit' => 0,
                 'currency' => $data['currency'],
                 'exchange_rate_id' => $rate?->id,
-                'total_cost_cup' => $costCup * $data['quantity'],
+                'total_cost_cup' => $costCup * $baseQty,
                 'user_id' => Auth::id(),
             ]);
         });

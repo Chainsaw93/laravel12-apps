@@ -11,6 +11,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'category_id',
+        'unit_id',
         'description',
         'image_path',
         'expiry_date',
@@ -48,5 +49,29 @@ class Product extends Model
     public function inventoryMovements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
+    public function presentations(): HasMany
+    {
+        return $this->hasMany(ProductUnit::class);
+    }
+
+    public function getConversionFactor(?int $unitId): float
+    {
+        if (!$unitId || $unitId === $this->unit_id) {
+            return 1.0;
+        }
+        $conversion = $this->presentations()->where('unit_id', $unitId)->first();
+        return $conversion?->conversion_factor ?? 1.0;
+    }
+
+    public function convertToBase(?int $unitId, float $quantity): float
+    {
+        return $quantity * $this->getConversionFactor($unitId);
     }
 }

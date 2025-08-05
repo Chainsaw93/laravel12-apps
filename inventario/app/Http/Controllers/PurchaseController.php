@@ -38,6 +38,7 @@ class PurchaseController extends Controller
             'exchange_rate_id' => 'required_if:currency,USD,MLC|nullable|exists:exchange_rates,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id' => 'nullable|exists:units,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.cost' => 'required|numeric|min:0',
         ]);
@@ -61,41 +62,47 @@ class PurchaseController extends Controller
 
             $total = 0;
             foreach ($data['items'] as $item) {
+                $product = Product::find($item['product_id']);
+                $unitId = $item['unit_id'] ?? $product->unit_id;
+                $factor = $product->getConversionFactor($unitId);
+                $baseQty = $item['quantity'] * $factor;
+                $currencyCost = $item['cost'] / $factor;
+                $costCup = $rate ? $currencyCost * $rate->rate_to_cup : $currencyCost;
+                $lineTotal = $baseQty * $costCup;
+
                 $stock = Stock::firstOrCreate(
                     ['warehouse_id' => $data['warehouse_id'], 'product_id' => $item['product_id']],
                     ['quantity' => 0, 'average_cost' => 0]
                 );
 
-                $costCup = $rate ? $item['cost'] * $rate->rate_to_cup : $item['cost'];
-                $lineTotal = $item['quantity'] * $costCup;
-
                 PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'currency_cost' => $item['cost'],
+                    'unit_id' => $unitId,
+                    'quantity' => $baseQty,
+                    'currency_cost' => $currencyCost,
                     'cost_cup' => $costCup,
                     'exchange_rate_id' => $rate?->id,
                 ]);
 
                 Product::where('id', $item['product_id'])->update([
-                    'cost' => $item['cost'],
+                    'cost' => $currencyCost,
                     'currency' => $data['currency'],
                 ]);
 
                 $oldQuantity = $stock->quantity;
                 $oldCost = $stock->average_cost;
 
-                $stock->increment('quantity', $item['quantity']);
+                $stock->increment('quantity', $baseQty);
 
-                $newAvg = (($oldQuantity * $oldCost) + ($item['quantity'] * $costCup)) / ($oldQuantity + $item['quantity']);
+                $newAvg = (($oldQuantity * $oldCost) + ($baseQty * $costCup)) / ($oldQuantity + $baseQty);
                 $stock->update(['average_cost' => $newAvg]);
 
                 StockMovement::create([
                     'stock_id' => $stock->id,
                     'type' => MovementType::IN,
-                    'quantity' => $item['quantity'],
-                    'purchase_price' => $item['cost'],
+                    'quantity' => $baseQty,
+                    'purchase_price' => $currencyCost,
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
                     'reason' => 'Compra ' . $purchase->id,
@@ -105,11 +112,11 @@ class PurchaseController extends Controller
                 $batch = Batch::create([
                     'product_id' => $item['product_id'],
                     'warehouse_id' => $data['warehouse_id'],
-                    'quantity_remaining' => $item['quantity'],
+                    'quantity_remaining' => $baseQty,
                     'unit_cost_cup' => $costCup,
                     'currency' => $data['currency'],
                     'indirect_cost' => 0,
-                    'total_cost_cup' => $costCup * $item['quantity'],
+                    'total_cost_cup' => $costCup * $baseQty,
                     'received_at' => now(),
                 ]);
 
@@ -118,12 +125,12 @@ class PurchaseController extends Controller
                     'product_id' => $item['product_id'],
                     'warehouse_id' => $data['warehouse_id'],
                     'movement_type' => MovementType::IN,
-                    'quantity' => $item['quantity'],
+                    'quantity' => $baseQty,
                     'unit_cost_cup' => $costCup,
                     'indirect_cost_unit' => 0,
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
-                    'total_cost_cup' => $costCup * $item['quantity'],
+                    'total_cost_cup' => $costCup * $baseQty,
                     'reference_type' => Purchase::class,
                     'reference_id' => $purchase->id,
                     'user_id' => Auth::id(),
