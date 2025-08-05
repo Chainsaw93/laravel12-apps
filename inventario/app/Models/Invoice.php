@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\PaymentMethod;
 use App\Models\{InvoiceReturn, InvoiceCancellation};
+use App\Models\Traits\HasActivityLog;
 
 class Invoice extends Model
 {
+    use HasActivityLog;
     protected $fillable = [
         'client_id',
         'warehouse_id',

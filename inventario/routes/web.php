@@ -88,6 +88,7 @@ Route::middleware([
     Route::resource('sales', InvoiceController::class)->only(['index','create','store']);
     Route::post('sales/{invoice}/returns', [InvoiceController::class, 'returnItems'])->name('sales.returns');
     Route::post('sales/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('sales.cancel');
+    Route::post('sales/{invoice}/approve', [InvoiceController::class, 'approve'])->name('sales.approve');
 
     Route::get('reports', [SalesReportController::class, 'index'])->name('reports.index');
     Route::get('reports/pdf', [SalesReportController::class, 'pdf'])->name('reports.pdf');
