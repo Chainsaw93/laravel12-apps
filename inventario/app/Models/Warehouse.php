@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Warehouse extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'valuation_method'];
 
     public function stocks(): HasMany
     {
