@@ -5,27 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\InvoiceReturnItem;
 
-class InvoiceItem extends Model
+class InvoiceReturn extends Model
 {
     protected $fillable = [
         'invoice_id',
-        'product_id',
-        'quantity',
-        'price',
-        'currency_price',
-        'total',
-        'cost',
+        'user_id',
+        'reason',
+        'total_amount',
         'total_cost',
-        'returned_quantity',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'currency_price' => 'decimal:2',
-        'total' => 'decimal:2',
-        'cost' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'total_cost' => 'decimal:2',
     ];
 
@@ -34,12 +26,12 @@ class InvoiceItem extends Model
         return $this->belongsTo(Invoice::class);
     }
 
-    public function product(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(User::class);
     }
 
-    public function returnItems(): HasMany
+    public function items(): HasMany
     {
         return $this->hasMany(InvoiceReturnItem::class);
     }

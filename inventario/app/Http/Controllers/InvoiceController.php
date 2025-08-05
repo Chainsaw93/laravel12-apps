@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Invoice, InvoiceItem, Client, Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement};
+use App\Models\{Invoice, InvoiceItem, Client, Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement, InvoiceReturn, InvoiceReturnItem, InvoiceCancellation};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -198,5 +198,153 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('sales.index');
+    }
+
+    public function returnItems(Request $request, Invoice $invoice)
+    {
+        $data = $request->validate([
+            'reason' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.invoice_item_id' => 'required|exists:invoice_items,id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+        try {
+            DB::transaction(function () use ($invoice, $data) {
+                $this->processReturn($invoice, $data['items'], $data['reason'] ?? null);
+            });
+        } catch (\Throwable $e) {
+            return back()->withErrors(['items' => $e->getMessage()]);
+        }
+        return back();
+    }
+
+    public function cancel(Request $request, Invoice $invoice)
+    {
+        $data = $request->validate([
+            'reason' => 'required|string',
+        ]);
+        try {
+            DB::transaction(function () use ($invoice, $data) {
+                $items = [];
+                foreach ($invoice->items as $item) {
+                    $remaining = $item->quantity - $item->returned_quantity;
+                    if ($remaining > 0) {
+                        $items[] = [
+                            'invoice_item_id' => $item->id,
+                            'quantity' => $remaining,
+                        ];
+                    }
+                }
+                if ($items) {
+                    $this->processReturn($invoice, $items, 'Cancellation: ' . $data['reason']);
+                }
+                $invoice->update(['status' => 'cancelled']);
+                InvoiceCancellation::create([
+                    'invoice_id' => $invoice->id,
+                    'user_id' => Auth::id(),
+                    'reason' => $data['reason'],
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return back()->withErrors(['invoice' => $e->getMessage()]);
+        }
+        return redirect()->route('sales.index');
+    }
+
+    protected function processReturn(Invoice $invoice, array $items, ?string $reason = null): InvoiceReturn
+    {
+        $return = InvoiceReturn::create([
+            'invoice_id' => $invoice->id,
+            'user_id' => Auth::id(),
+            'reason' => $reason,
+            'total_amount' => 0,
+            'total_cost' => 0,
+        ]);
+
+        $totalAmount = 0;
+        $totalCost = 0;
+
+        foreach ($items as $itemData) {
+            $invoiceItem = InvoiceItem::where('invoice_id', $invoice->id)
+                ->findOrFail($itemData['invoice_item_id']);
+            $available = $invoiceItem->quantity - $invoiceItem->returned_quantity;
+            if ($itemData['quantity'] > $available) {
+                throw new \Exception('Return quantity exceeds available amount');
+            }
+            $amount = $itemData['quantity'] * $invoiceItem->price;
+            $cost = $itemData['quantity'] * $invoiceItem->cost;
+
+            InvoiceReturnItem::create([
+                'invoice_return_id' => $return->id,
+                'invoice_item_id' => $invoiceItem->id,
+                'quantity' => $itemData['quantity'],
+                'amount' => $amount,
+                'cost' => $cost,
+            ]);
+
+            $invoiceItem->increment('returned_quantity', $itemData['quantity']);
+
+            $stock = Stock::firstOrCreate(
+                ['warehouse_id' => $invoice->warehouse_id, 'product_id' => $invoiceItem->product_id],
+                ['quantity' => 0, 'average_cost' => 0]
+            );
+
+            $oldQuantity = $stock->quantity;
+            $oldCost = $stock->average_cost;
+            $stock->increment('quantity', $itemData['quantity']);
+            $newAvg = (($oldQuantity * $oldCost) + ($itemData['quantity'] * $invoiceItem->cost)) / ($oldQuantity + $itemData['quantity']);
+            $stock->update(['average_cost' => $newAvg]);
+
+            StockMovement::create([
+                'stock_id' => $stock->id,
+                'type' => MovementType::IN,
+                'quantity' => $itemData['quantity'],
+                'purchase_price' => $invoiceItem->cost,
+                'currency' => 'CUP',
+                'exchange_rate_id' => null,
+                'reason' => 'Devolución factura ' . $invoice->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            $batch = Batch::create([
+                'product_id' => $invoiceItem->product_id,
+                'warehouse_id' => $invoice->warehouse_id,
+                'quantity_remaining' => $itemData['quantity'],
+                'unit_cost_cup' => $invoiceItem->cost,
+                'currency' => 'CUP',
+                'indirect_cost' => 0,
+                'total_cost_cup' => $invoiceItem->cost * $itemData['quantity'],
+                'received_at' => now(),
+            ]);
+
+            InventoryMovement::create([
+                'batch_id' => $batch->id,
+                'product_id' => $invoiceItem->product_id,
+                'warehouse_id' => $invoice->warehouse_id,
+                'movement_type' => MovementType::IN,
+                'quantity' => $itemData['quantity'],
+                'unit_cost_cup' => $invoiceItem->cost,
+                'indirect_cost_unit' => 0,
+                'currency' => 'CUP',
+                'exchange_rate_id' => null,
+                'total_cost_cup' => $invoiceItem->cost * $itemData['quantity'],
+                'reference_type' => InvoiceReturn::class,
+                'reference_id' => $return->id,
+                'user_id' => Auth::id(),
+            ]);
+
+            $totalAmount += $amount;
+            $totalCost += $cost;
+        }
+
+        $return->update([
+            'total_amount' => $totalAmount,
+            'total_cost' => $totalCost,
+        ]);
+
+        $invoice->decrement('total_amount', $totalAmount);
+        $invoice->decrement('total_cost', $totalCost);
+
+        return $return;
     }
 }
