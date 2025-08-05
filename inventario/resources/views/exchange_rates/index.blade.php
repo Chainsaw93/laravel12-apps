@@ -29,6 +29,9 @@
                 </form>
             </div>
             <div class="bg-white shadow sm:rounded-lg">
+                @if($errors->any())
+                    <div class="text-red-500 p-4">{{ $errors->first() }}</div>
+                @endif
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -45,13 +48,20 @@
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $rate->rate_to_cup }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $rate->effective_date->toDateString() }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <form method="POST" action="{{ route('exchange-rates.update', $rate) }}" class="flex space-x-2">
-                                        @csrf
-                                        @method('PUT')
-                                        <x-input name="rate_to_cup" type="number" step="0.000001" value="{{ $rate->rate_to_cup }}" class="w-24" />
-                                        <x-input name="effective_date" type="date" value="{{ $rate->effective_date->toDateString() }}" class="w-32" />
-                                        <x-button>{{ __('Update') }}</x-button>
-                                    </form>
+                                    <div class="space-y-2">
+                                        <form method="POST" action="{{ route('exchange-rates.update', $rate) }}" class="flex space-x-2">
+                                            @csrf
+                                            @method('PUT')
+                                            <x-input name="rate_to_cup" type="number" step="0.000001" value="{{ $rate->rate_to_cup }}" class="w-24" />
+                                            <x-input name="effective_date" type="date" value="{{ $rate->effective_date->toDateString() }}" class="w-32" />
+                                            <x-button>{{ __('Update') }}</x-button>
+                                        </form>
+                                        <form method="POST" action="{{ route('exchange-rates.destroy', $rate) }}" onsubmit="return confirm('{{ __('Are you sure?') }}');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-danger-button>{{ __('Delete') }}</x-danger-button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

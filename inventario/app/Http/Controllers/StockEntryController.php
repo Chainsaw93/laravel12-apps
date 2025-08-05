@@ -14,7 +14,7 @@ class StockEntryController extends Controller
         return view('entries.create', [
             'warehouses' => Warehouse::all(),
             'products' => Product::all(),
-            'rates' => ExchangeRate::orderByDesc('effective_date')->get(),
+            'rates' => ExchangeRate::orderByDesc('effective_date')->get()->keyBy('currency'),
         ]);
     }
 
