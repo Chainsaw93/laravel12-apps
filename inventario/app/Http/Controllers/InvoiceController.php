@@ -37,7 +37,7 @@ class InvoiceController extends Controller
             'client_id' => 'required|exists:clients,id',
             'warehouse_id' => 'required|exists:warehouses,id',
             'currency' => 'required|in:CUP,USD,MLC',
-            'exchange_rate_id' => 'nullable|exists:exchange_rates,id',
+            'exchange_rate_id' => 'required_if:currency,USD,MLC|exists:exchange_rates,id',
             'payment_method' => 'required|in:' . implode(',', array_map(fn($m) => $m->value, PaymentMethod::cases())),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -47,6 +47,11 @@ class InvoiceController extends Controller
         $rate = null;
         if ($data['currency'] !== 'CUP') {
             $rate = ExchangeRate::find($data['exchange_rate_id']);
+            if (!$rate) {
+                return back()->withErrors([
+                    'exchange_rate_id' => 'Invalid exchange rate',
+                ])->withInput();
+            }
         } else {
             $data['exchange_rate_id'] = null;
         }
