@@ -6,7 +6,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                <a href="{{ route('invoices.create') }}" class="mb-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">{{ __('New') }}</a>
+                <a href="{{ route('sales.create') }}" class="mb-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">{{ __('New') }}</a>
                 <table class="w-full text-left border">
                     <thead>
                         <tr>

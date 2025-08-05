@@ -45,4 +45,20 @@ class ExchangeRateController extends Controller
         $exchangeRate->update($data);
         return redirect()->route('exchange-rates.index');
     }
+
+    public function destroy(ExchangeRate $exchangeRate)
+    {
+        $inUse = $exchangeRate->purchases()->exists()
+            || $exchangeRate->invoices()->exists()
+            || $exchangeRate->stockMovements()->exists();
+
+        if ($inUse) {
+            return redirect()->route('exchange-rates.index')
+                ->withErrors(__('This exchange rate is in use and cannot be deleted.'));
+        }
+
+        $exchangeRate->delete();
+
+        return redirect()->route('exchange-rates.index');
+    }
 }

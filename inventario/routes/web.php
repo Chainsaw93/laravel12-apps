@@ -62,7 +62,7 @@ Route::middleware([
     Route::resource('products', ProductController::class)->except('show');
     Route::resource('warehouses', WarehouseController::class);
     Route::resource('clients', ClientController::class);
-    Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update']);
+    Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update','destroy']);
     Route::resource('purchases', PurchaseController::class)->only(['index','create','store']);
 
 
