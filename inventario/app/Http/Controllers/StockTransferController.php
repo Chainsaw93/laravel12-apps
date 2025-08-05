@@ -48,7 +48,7 @@ class StockTransferController extends Controller
 
         $currency = 'CUP';
         $exchangeRateId = null;
-        $purchasePrice = $costCup;
+        $rate = null;
 
         $lastMovement = StockMovement::where('stock_id', $from->id)
             ->whereNotNull('purchase_price')
@@ -59,9 +59,6 @@ class StockTransferController extends Controller
             $currency = $lastMovement->currency;
             $exchangeRateId = $lastMovement->exchange_rate_id;
             $rate = $lastMovement->exchangeRate;
-            if ($rate) {
-                $purchasePrice = $costCup / $rate->rate_to_cup;
-            }
         }
 
         $remaining = $data['quantity'];
@@ -176,7 +173,12 @@ class StockTransferController extends Controller
 
                 $remaining -= $take;
             }
-            $unitCost = $costAccum / $data['quantity'];
+        }
+
+        $costCup = $costAccum / $data['quantity'];
+        $purchasePrice = $costCup;
+        if ($rate) {
+            $purchasePrice = $costCup / $rate->rate_to_cup;
         }
 
         $from->decrement('quantity', $data['quantity']);
