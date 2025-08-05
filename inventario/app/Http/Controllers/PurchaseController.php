@@ -61,7 +61,7 @@ class PurchaseController extends Controller
         foreach ($data['items'] as $item) {
             $stock = Stock::firstOrCreate(
                 ['warehouse_id' => $data['warehouse_id'], 'product_id' => $item['product_id']],
-                ['quantity' => 0]
+                ['quantity' => 0, 'average_cost' => 0]
             );
 
             $costCup = $rate ? $item['cost'] * $rate->rate_to_cup : $item['cost'];
@@ -76,7 +76,13 @@ class PurchaseController extends Controller
                 'exchange_rate_id' => $rate?->id,
             ]);
 
+            $oldQuantity = $stock->quantity;
+            $oldCost = $stock->average_cost;
+
             $stock->increment('quantity', $item['quantity']);
+
+            $newAvg = (($oldQuantity * $oldCost) + ($item['quantity'] * $costCup)) / ($oldQuantity + $item['quantity']);
+            $stock->update(['average_cost' => $newAvg]);
 
             StockMovement::create([
                 'stock_id' => $stock->id,

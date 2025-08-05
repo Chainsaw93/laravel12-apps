@@ -25,9 +25,10 @@ class StockLimitTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 5,
+            'average_cost' => 0,
         ]);
 
-        $response = $this->actingAs($user)->post('/invoices', [
+        $response = $this->actingAs($user)->post('/sales', [
             'client_id' => $client->id,
             'warehouse_id' => $warehouse->id,
             'currency' => 'CUP',
@@ -55,11 +56,13 @@ class StockLimitTest extends TestCase
             'warehouse_id' => $from->id,
             'product_id' => $product->id,
             'quantity' => 5,
+            'average_cost' => 0,
         ]);
         $toStock = Stock::create([
             'warehouse_id' => $to->id,
             'product_id' => $product->id,
             'quantity' => 0,
+            'average_cost' => 0,
         ]);
 
         $response = $this->actingAs($user)->post('/transfers', [

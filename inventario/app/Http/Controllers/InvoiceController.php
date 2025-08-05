@@ -68,6 +68,8 @@ class InvoiceController extends Controller
             }
             $priceCup = $rate ? $itemData['price'] * $rate->rate_to_cup : $itemData['price'];
             $lineTotal = $itemData['quantity'] * $priceCup;
+            $cost = $stock->average_cost;
+            $lineCost = $itemData['quantity'] * $cost;
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'product_id' => $itemData['product_id'],
@@ -75,12 +77,16 @@ class InvoiceController extends Controller
                 'price' => $priceCup,
                 'currency_price' => $itemData['price'],
                 'total' => $lineTotal,
+                'cost' => $cost,
+                'total_cost' => $lineCost,
             ]);
             $stock->decrement('quantity', $itemData['quantity']);
             StockMovement::create([
                 'stock_id' => $stock->id,
                 'type' => MovementType::OUT,
                 'quantity' => $itemData['quantity'],
+                'purchase_price' => $cost,
+                'currency' => 'CUP',
                 'reason' => 'Venta factura ' . $invoice->id,
                 'user_id' => Auth::id(),
             ]);
@@ -89,6 +95,6 @@ class InvoiceController extends Controller
 
         $invoice->update(['total_amount' => $total]);
 
-        return redirect()->route('invoices.index');
+        return redirect()->route('sales.index');
     }
 }

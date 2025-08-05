@@ -14,6 +14,16 @@ class InvoiceItem extends Model
         'price',
         'currency_price',
         'total',
+        'cost',
+        'total_cost',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'currency_price' => 'decimal:2',
+        'total' => 'decimal:2',
+        'cost' => 'decimal:2',
+        'total_cost' => 'decimal:2',
     ];
 
     public function invoice(): BelongsTo
