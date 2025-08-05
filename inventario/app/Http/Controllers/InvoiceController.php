@@ -244,11 +244,19 @@ class InvoiceController extends Controller
                     'user_id' => Auth::id(),
                     'reason' => $data['reason'],
                 ]);
+                $invoice->recordActivity('cancelled', ['reason' => $data['reason']]);
             });
         } catch (\Throwable $e) {
             return back()->withErrors(['invoice' => $e->getMessage()]);
         }
         return redirect()->route('sales.index');
+    }
+
+    public function approve(Invoice $invoice)
+    {
+        $invoice->update(['status' => 'approved']);
+        $invoice->recordActivity('approved');
+        return back();
     }
 
     protected function processReturn(Invoice $invoice, array $items, ?string $reason = null): InvoiceReturn
