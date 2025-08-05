@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\SalesReport;
 use Illuminate\Http\Request;
-use App\Models\{Sale, Product, Warehouse};
-use App\Enums\PaymentMethod;
+use App\Models\{InvoiceItem, Product, Warehouse};
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesReportController extends Controller
@@ -21,7 +20,6 @@ class SalesReportController extends Controller
             'sales' => $sales,
             'products' => Product::all(),
             'warehouses' => Warehouse::all(),
-            'methods' => PaymentMethod::cases(),
         ]);
     }
 
@@ -36,19 +34,17 @@ class SalesReportController extends Controller
         $sales = $this->filteredSales($request);
         $callback = function () use ($sales) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Date', 'Product', 'Warehouse', 'Quantity', 'Price', 'Price CUP', 'Total CUP', 'Payment Method']);
+            fputcsv($out, ['Date', 'Product', 'Warehouse', 'Quantity', 'Price', 'Price CUP', 'Total CUP']);
             foreach ($sales as $sale) {
-                $rate = $sale->exchangeRate->rate_to_cup ?? 1;
-                $priceCup = $sale->price_per_unit * $rate;
+                $priceCup = $sale->price;
                 fputcsv($out, [
-                    $sale->created_at->toDateString(),
+                    $sale->invoice->created_at->toDateString(),
                     $sale->product->name,
-                    $sale->warehouse->name,
+                    $sale->invoice->warehouse->name,
                     $sale->quantity,
-                    $sale->price_per_unit,
+                    $sale->currency_price,
                     $priceCup,
-                    $sale->quantity * $priceCup,
-                    $sale->payment_method->value ?? $sale->payment_method,
+                    $sale->total,
                 ]);
             }
             fclose($out);
@@ -58,12 +54,13 @@ class SalesReportController extends Controller
 
     protected function filteredSales(Request $request)
     {
-        return Sale::with(['product', 'warehouse', 'exchangeRate'])
-            ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
-            ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
+        return InvoiceItem::with(['product', 'invoice.warehouse', 'invoice'])
             ->when($request->product_id, fn($q, $p) => $q->where('product_id', $p))
-            ->when($request->warehouse_id, fn($q, $w) => $q->where('warehouse_id', $w))
-            ->when($request->payment_method, fn($q, $m) => $q->where('payment_method', $m))
+            ->whereHas('invoice', function ($q) use ($request) {
+                $q->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
+                  ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
+                  ->when($request->warehouse_id, fn($q, $w) => $q->where('warehouse_id', $w));
+            })
             ->orderBy('created_at', 'desc')
             ->get();
     }

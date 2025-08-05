@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\PaymentMethod;
+use App\Models\User;
 
 class Sale extends Model
 {
@@ -36,5 +37,10 @@ class Sale extends Model
     public function exchangeRate(): BelongsTo
     {
         return $this->belongsTo(ExchangeRate::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
