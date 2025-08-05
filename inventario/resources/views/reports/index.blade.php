@@ -31,7 +31,7 @@
             </div>
 
             <form method="GET" action="{{ route('reports.index') }}" class="bg-white shadow sm:rounded-lg p-4 space-y-4 mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <x-label for="start_date" value="{{ __('Start Date') }}" />
                         <x-input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="mt-1 block w-full" />
@@ -58,15 +58,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <x-label for="payment_method" value="{{ __('Payment Method') }}" />
-                        <select id="payment_method" name="payment_method" class="mt-1 block w-full border-gray-300 rounded">
-                            <option value="">{{ __('All') }}</option>
-                            @foreach($methods as $method)
-                                <option value="{{ $method->value }}" @selected(request('payment_method')==$method->value)>{{ $method->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
                 </div>
                 <div class="flex space-x-2">
                     <x-button type="submit">{{ __('Filter') }}</x-button>
@@ -88,25 +79,22 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Price') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Price CUP') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Total CUP') }}</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Payment') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($sales as $sale)
-                            @php $rate = $sale->exchangeRate->rate_to_cup ?? 1; $priceCup = $sale->price_per_unit * $rate; @endphp
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $sale->created_at->toDateString() }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $sale->invoice->created_at->toDateString() }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->product->name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $sale->warehouse->name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ $sale->invoice->warehouse->name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">{{ $sale->quantity }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->price_per_unit,2) }} {{ $sale->currency }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($priceCup,2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->quantity * $priceCup,2) }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">{{ $sale->payment_method->name ?? $sale->payment_method }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->currency_price,2) }} {{ $sale->invoice->currency }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->price,2) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">{{ number_format($sale->total,2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-4 whitespace-nowrap text-center">{{ __('No data') }}</td>
+                                <td colspan="7" class="px-6 py-4 whitespace-nowrap text-center">{{ __('No data') }}</td>
                             </tr>
                         @endforelse
                     </tbody>

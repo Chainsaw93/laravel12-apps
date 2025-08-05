@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Sale;
+use App\Models\Invoice;
 use Carbon\Carbon;
 
 class SalesReport
@@ -10,19 +10,11 @@ class SalesReport
     public function total(string $period): float
     {
         $now = Carbon::now();
-        return Sale::with('exchangeRate')->get()
-            ->filter(function (Sale $sale) use ($period, $now) {
-                return match ($period) {
-                    'daily' => $sale->created_at->isSameDay($now),
-                    'weekly' => $sale->created_at->isSameWeek($now),
-                    'monthly' => $sale->created_at->isSameMonth($now),
-                    default => false,
-                };
-            })
-            ->reduce(function (float $carry, Sale $sale) {
-                $rate = $sale->exchangeRate->rate_to_cup ?? 1;
-                $total = $sale->quantity * $sale->price_per_unit * $rate;
-                return $carry + $total;
-            }, 0.0);
+
+        return Invoice::query()
+            ->when($period === 'daily', fn($q) => $q->whereDate('created_at', $now->toDateString()))
+            ->when($period === 'weekly', fn($q) => $q->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]))
+            ->when($period === 'monthly', fn($q) => $q->whereYear('created_at', $now->year)->whereMonth('created_at', $now->month))
+            ->sum('total_amount');
     }
 }

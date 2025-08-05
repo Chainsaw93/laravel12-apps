@@ -8,7 +8,6 @@ use App\Http\Controllers\{
     ProductController,
     WarehouseController,
     StockTransferController,
-    SaleController,
     SalesReportController,
     StockEntryController,
     ClientController,
@@ -63,7 +62,6 @@ Route::middleware([
     Route::resource('products', ProductController::class)->except('show');
     Route::resource('warehouses', WarehouseController::class);
     Route::resource('clients', ClientController::class);
-    Route::resource('invoices', InvoiceController::class)->only(['index','create','store']);
     Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update']);
     Route::resource('purchases', PurchaseController::class)->only(['index','create','store']);
 
@@ -76,7 +74,7 @@ Route::middleware([
     Route::get('entries/create', [StockEntryController::class, 'create'])->name('entries.create');
     Route::post('entries', [StockEntryController::class, 'store'])->name('entries.store');
 
-    Route::resource('sales', SaleController::class)->only(['index', 'create', 'store']);
+    Route::resource('sales', InvoiceController::class)->only(['index','create','store']);
 
     Route::get('reports', [SalesReportController::class, 'index'])->name('reports.index');
     Route::get('reports/pdf', [SalesReportController::class, 'pdf'])->name('reports.pdf');

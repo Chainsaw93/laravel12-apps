@@ -2,8 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Enums\PaymentMethod;
-use App\Models\{Category, Product, Warehouse, Sale, ExchangeRate, User};
+use App\Models\{Category, Product, Warehouse, Invoice, InvoiceItem, ExchangeRate, User, Client};
 use App\Services\SalesReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,6 +21,7 @@ class SalesReportTest extends TestCase
             'category_id' => $category->id,
         ]);
         $warehouse = Warehouse::create(['name' => 'Main']);
+        $client = Client::create(['name' => 'Acme']);
 
         $rate1 = ExchangeRate::create([
             'currency' => 'USD',
@@ -36,27 +36,43 @@ class SalesReportTest extends TestCase
             'user_id' => $user->id,
         ]);
 
-        Sale::create([
+        $invoice1 = Invoice::create([
+            'client_id' => $client->id,
             'warehouse_id' => $warehouse->id,
-            'product_id' => $product->id,
-            'quantity' => 2,
-            'price_per_unit' => 10,
-            'payment_method' => PaymentMethod::CASH_USD,
+            'user_id' => $user->id,
             'currency' => 'USD',
             'exchange_rate_id' => $rate1->id,
-            'user_id' => $user->id,
+            'total_amount' => 0,
+            'status' => 'issued',
         ]);
-
-        Sale::create([
-            'warehouse_id' => $warehouse->id,
+        InvoiceItem::create([
+            'invoice_id' => $invoice1->id,
             'product_id' => $product->id,
-            'quantity' => 1,
-            'price_per_unit' => 10,
-            'payment_method' => PaymentMethod::CASH_USD,
+            'quantity' => 2,
+            'price' => 250,
+            'currency_price' => 10,
+            'total' => 500,
+        ]);
+        $invoice1->update(['total_amount' => 500]);
+
+        $invoice2 = Invoice::create([
+            'client_id' => $client->id,
+            'warehouse_id' => $warehouse->id,
+            'user_id' => $user->id,
             'currency' => 'USD',
             'exchange_rate_id' => $rate2->id,
-            'user_id' => $user->id,
+            'total_amount' => 0,
+            'status' => 'issued',
         ]);
+        InvoiceItem::create([
+            'invoice_id' => $invoice2->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'price' => 300,
+            'currency_price' => 10,
+            'total' => 300,
+        ]);
+        $invoice2->update(['total_amount' => 300]);
 
         $report = new SalesReport();
         $this->assertEquals(800.0, $report->total('daily'));
