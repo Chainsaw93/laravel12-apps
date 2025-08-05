@@ -40,7 +40,13 @@ class WarehouseController extends Controller
 
     public function destroy(Warehouse $warehouse)
     {
+        if (Stock::where('warehouse_id', $warehouse->id)->exists()) {
+            return redirect()->route('warehouses.index')
+                ->withErrors(['warehouse' => __('This warehouse has stock and cannot be deleted.')]);
+        }
+
         $warehouse->delete();
+
         return redirect()->route('warehouses.index');
     }
 
