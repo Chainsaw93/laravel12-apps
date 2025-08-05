@@ -14,7 +14,8 @@ use App\Http\Controllers\{
     ClientController,
     InvoiceController,
     ExchangeRateController,
-    PurchaseController
+    PurchaseController,
+    RoleController
 };
 
 Route::view('/', 'welcome')->name('welcome');
@@ -65,6 +66,12 @@ Route::middleware([
     Route::resource('clients', ClientController::class);
     Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update','destroy']);
     Route::resource('purchases', PurchaseController::class)->only(['index','create','store']);
+
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('roles', RoleController::class)->except('show');
+        Route::get('roles/assign', [RoleController::class, 'assignForm'])->name('roles.assign_form');
+        Route::post('roles/assign', [RoleController::class, 'assign'])->name('roles.assign');
+    });
 
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
