@@ -124,6 +124,8 @@ class PurchaseController extends Controller
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
                     'total_cost_cup' => $costCup * $item['quantity'],
+                    'reference_type' => Purchase::class,
+                    'reference_id' => $purchase->id,
                     'user_id' => Auth::id(),
                 ]);
 

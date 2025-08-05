@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use App\Enums\MovementType;
 
 class InventoryMovement extends Model
@@ -19,6 +20,7 @@ class InventoryMovement extends Model
         'currency',
         'exchange_rate_id',
         'total_cost_cup',
+        'reference_type',
         'reference_id',
         'user_id',
     ];
@@ -53,5 +55,10 @@ class InventoryMovement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reference(): MorphTo
+    {
+        return $this->morphTo();
     }
 }
