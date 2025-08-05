@@ -16,12 +16,15 @@ class Invoice extends Model
         'currency',
         'exchange_rate_id',
         'total_amount',
+        'total_cost',
         'status',
         'payment_method',
     ];
 
     protected $casts = [
         'payment_method' => PaymentMethod::class,
+        'total_amount' => 'decimal:2',
+        'total_cost' => 'decimal:2',
     ];
 
     public function client(): BelongsTo

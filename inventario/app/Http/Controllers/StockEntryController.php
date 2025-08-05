@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Product, Stock, StockMovement, ExchangeRate};
+use App\Models\{Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\MovementType;
@@ -62,6 +62,31 @@ class StockEntryController extends Controller
             'exchange_rate_id' => $rate?->id,
             'reason' => $data['reason'] ?? null,
             'description' => $data['description'] ?? null,
+            'user_id' => Auth::id(),
+        ]);
+
+        $batch = Batch::create([
+            'product_id' => $data['product_id'],
+            'warehouse_id' => $data['warehouse_id'],
+            'quantity_remaining' => $data['quantity'],
+            'unit_cost_cup' => $costCup,
+            'currency' => $data['currency'],
+            'indirect_cost' => 0,
+            'total_cost_cup' => $costCup * $data['quantity'],
+            'received_at' => now(),
+        ]);
+
+        InventoryMovement::create([
+            'batch_id' => $batch->id,
+            'product_id' => $data['product_id'],
+            'warehouse_id' => $data['warehouse_id'],
+            'movement_type' => MovementType::IN,
+            'quantity' => $data['quantity'],
+            'unit_cost_cup' => $costCup,
+            'indirect_cost_unit' => 0,
+            'currency' => $data['currency'],
+            'exchange_rate_id' => $rate?->id,
+            'total_cost_cup' => $costCup * $data['quantity'],
             'user_id' => Auth::id(),
         ]);
 
