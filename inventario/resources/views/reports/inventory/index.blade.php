@@ -81,6 +81,31 @@
                         </tbody>
                     </table>
                 </div>
+                @if(isset($valuation) && $valuation->isNotEmpty())
+                <div class="bg-white p-4 shadow sm:rounded-lg mt-4">
+                    <h3 class="font-semibold mb-2">{{ __('Valuation by Warehouse') }}</h3>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2">{{ __('Warehouse') }}</th>
+                                <th class="px-4 py-2">{{ __('Inventory Value') }}</th>
+                                <th class="px-4 py-2">{{ __('Average Cost') }}</th>
+                                <th class="px-4 py-2">{{ __('Profit Margin') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($valuation as $row)
+                                <tr>
+                                    <td class="px-4 py-2">{{ $row['warehouse'] }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row['inventory_value'], 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row['average_cost'], 2) }}</td>
+                                    <td class="px-4 py-2">{{ number_format($row['profit_margin'] * 100, 2) }}%</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             @endif
         </div>
     </div>

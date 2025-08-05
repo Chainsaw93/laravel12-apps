@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\{User, Category, Product, Warehouse, Client, Stock, InvoiceItem};
+use App\Enums\PaymentMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -50,6 +51,7 @@ class StockCostTest extends TestCase
             'client_id' => $client->id,
             'warehouse_id' => $warehouse->id,
             'currency' => 'CUP',
+            'payment_method' => PaymentMethod::CASH_CUP->value,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 5, 'price' => 25],
             ],

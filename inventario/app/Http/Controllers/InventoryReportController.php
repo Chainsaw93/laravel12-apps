@@ -6,6 +6,7 @@ use App\Models\{StockMovement, Warehouse, Product};
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
+use App\Services\InventoryReport as InventoryReportService;
 
 class InventoryReportController extends Controller
 {
@@ -15,6 +16,7 @@ class InventoryReportController extends Controller
             'warehouses' => Warehouse::all(),
             'products' => Product::all(),
             'data' => collect(),
+            'valuation' => (new InventoryReportService())->valuationByWarehouse(),
         ]);
     }
 
@@ -25,6 +27,7 @@ class InventoryReportController extends Controller
             'warehouses' => Warehouse::all(),
             'products' => Product::all(),
             'data' => $data,
+            'valuation' => (new InventoryReportService())->valuationByWarehouse(),
         ]);
     }
 
@@ -40,6 +43,7 @@ class InventoryReportController extends Controller
         return Pdf::loadView('reports.inventory.pdf', [
             'data' => $data,
             'chart' => $chart,
+            'valuation' => (new InventoryReportService())->valuationByWarehouse(),
         ])->download('inventory_report.pdf');
     }
 

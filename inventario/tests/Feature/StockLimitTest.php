@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\{User, Category, Product, Warehouse, Stock, Client};
+use App\Enums\PaymentMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,6 +33,7 @@ class StockLimitTest extends TestCase
             'client_id' => $client->id,
             'warehouse_id' => $warehouse->id,
             'currency' => 'CUP',
+            'payment_method' => PaymentMethod::CASH_CUP->value,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 10, 'price' => 10],
             ],
