@@ -92,7 +92,21 @@ class CategoryController extends Controller
             abort(422, 'Invalid image data');
         }
 
-        $path = 'categories/' . uniqid() . '.png';
+        // Ensure the decoded image does not exceed 5MB
+        if (strlen($image) > 5 * 1024 * 1024) {
+            abort(422, 'Image exceeds maximum size of 5MB');
+        }
+
+        // Validate MIME type using finfo
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->buffer($image);
+        if (!in_array($mime, ['image/png', 'image/jpeg'])) {
+            abort(422, 'Invalid image type');
+        }
+
+        $extension = $mime === 'image/png' ? 'png' : 'jpg';
+        $path = 'categories/' . uniqid() . '.' . $extension;
+
         Storage::disk('public')->put($path, $image);
         return $path;
     }
