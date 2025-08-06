@@ -33,6 +33,15 @@
                     <x-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                         {{ __('Sales') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('transfers.create') }}" :active="request()->routeIs('transfers.*')">
+                        {{ __('Transfers') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('entries.create') }}" :active="request()->routeIs('entries.*')">
+                        {{ __('Entries') }}
+                    </x-nav-link>
+                    <x-nav-link href="{{ route('adjustments.create') }}" :active="request()->routeIs('adjustments.*')">
+                        {{ __('Adjustments') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.index')">
                         {{ __('Reports') }}
                     </x-nav-link>
@@ -183,6 +192,15 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                 {{ __('Sales') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('transfers.create') }}" :active="request()->routeIs('transfers.*')">
+                {{ __('Transfers') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('entries.create') }}" :active="request()->routeIs('entries.*')">
+                {{ __('Entries') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('adjustments.create') }}" :active="request()->routeIs('adjustments.*')">
+                {{ __('Adjustments') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('reports.index') }}" :active="request()->routeIs('reports.index')">
                 {{ __('Reports') }}
