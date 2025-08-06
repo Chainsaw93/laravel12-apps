@@ -24,6 +24,9 @@
                     <x-nav-link href="{{ route('warehouses.index') }}" :active="request()->routeIs('warehouses.*')">
                         {{ __('Warehouses') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('clients.index') }}" :active="request()->routeIs('clients.*')">
+                        {{ __('Clients') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                         {{ __('Sales') }}
                     </x-nav-link>
@@ -165,6 +168,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('warehouses.index') }}" :active="request()->routeIs('warehouses.*')">
                 {{ __('Warehouses') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('clients.index') }}" :active="request()->routeIs('clients.*')">
+                {{ __('Clients') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                 {{ __('Sales') }}
