@@ -48,6 +48,11 @@
                     <x-nav-link href="{{ route('exchange-rates.index') }}" :active="request()->routeIs('exchange-rates.*')">
                         {{ __('Exchange Rates') }}
                     </x-nav-link>
+                    @role('admin')
+                        <x-nav-link href="{{ route('roles.index') }}" :active="request()->routeIs('roles.*')">
+                            {{ __('Roles') }}
+                        </x-nav-link>
+                    @endrole
                 </div>
             </div>
 
@@ -208,6 +213,11 @@
             <x-responsive-nav-link href="{{ route('exchange-rates.index') }}" :active="request()->routeIs('exchange-rates.*')">
                 {{ __('Exchange Rates') }}
             </x-responsive-nav-link>
+            @role('admin')
+                <x-responsive-nav-link href="{{ route('roles.index') }}" :active="request()->routeIs('roles.*')">
+                    {{ __('Roles') }}
+                </x-responsive-nav-link>
+            @endrole
         </div>
 
         <!-- Responsive Settings Options -->
