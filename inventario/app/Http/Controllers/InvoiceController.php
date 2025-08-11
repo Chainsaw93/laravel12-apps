@@ -122,9 +122,6 @@ class InvoiceController extends Controller
                     $remaining = $baseQty;
                     $costAccum = 0;
                     if ($method === 'average') {
-                        $unitCost = $stock->average_cost;
-                        $costAccum = $unitCost * $baseQty;
-                        $realCost = 0;
                         $order = $warehouse->valuation_method === 'lifo' ? 'desc' : 'asc';
                         $batches = Batch::where('warehouse_id', $warehouse->id)
                             ->where('product_id', $itemData['product_id'])
@@ -155,8 +152,8 @@ class InvoiceController extends Controller
                                 'reference_id' => $invoice->id,
                                 'user_id' => Auth::id(),
                             ]);
+                            $costAccum += $batchCost;
                             $remaining -= $qtyToRemove;
-                            $realCost += $batchCost;
                         }
                         if ($remaining > 0) {
                             throw new \Exception('Insufficient stock');
@@ -198,8 +195,9 @@ class InvoiceController extends Controller
                         if ($remaining > 0) {
                             throw new \Exception('Insufficient stock');
                         }
-                        $unitCost = $costAccum / $baseQty;
                     }
+
+                    $unitCost = $costAccum / $baseQty;
 
                     InvoiceItem::create([
                         'invoice_id' => $invoice->id,

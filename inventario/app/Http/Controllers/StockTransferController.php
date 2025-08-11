@@ -217,10 +217,10 @@ class StockTransferController extends Controller
                     }
                 }
 
-                $unitTransferredCost = $costAccum / $baseQty;
-                $purchasePrice = $unitTransferredCost;
+                $unitCost = $costAccum / $baseQty;
+                $purchasePrice = $unitCost;
                 if ($rate) {
-                    $purchasePrice = $unitTransferredCost / $rate->rate_to_cup;
+                    $purchasePrice = $unitCost / $rate->rate_to_cup;
                 }
                 $from->decrement('quantity', $baseQty);
 
