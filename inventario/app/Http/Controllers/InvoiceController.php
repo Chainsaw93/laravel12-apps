@@ -20,6 +20,8 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
@@ -55,10 +57,19 @@ class InvoiceController extends Controller
             'payment_method' => 'required|in:'.implode(',', array_map(fn ($m) => $m->value, PaymentMethod::cases())),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.unit_id' => 'nullable|exists:units,id',
+            'items.*.unit_id' => 'nullable|integer',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
         ]);
+
+        foreach ($data['items'] as $item) {
+            Validator::make($item, [
+                'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
+                    ->where(fn ($query) => $query->where('product_id', $item['product_id']))],
+            ], [
+                'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+            ])->validate();
+        }
         $rate = null;
         if ($data['currency'] !== 'CUP') {
             $rate = ExchangeRate::find($data['exchange_rate_id']);
