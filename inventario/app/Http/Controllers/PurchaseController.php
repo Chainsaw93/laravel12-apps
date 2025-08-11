@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Purchase, PurchaseItem, Supplier, Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement};
+use App\Models\{Purchase, PurchaseItem, Supplier, Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement, SupplierInvoice};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +36,8 @@ class PurchaseController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'currency' => 'required|in:CUP,USD,MLC',
             'exchange_rate_id' => 'required_if:currency,USD,MLC|nullable|exists:exchange_rates,id',
+            'invoice_number' => 'nullable|string',
+            'invoice_date' => 'nullable|date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.unit_id' => 'nullable|exists:units,id',
@@ -51,6 +53,15 @@ class PurchaseController extends Controller
         }
 
         DB::transaction(function () use ($data, $rate) {
+            $invoice = null;
+            if (!empty($data['invoice_number'])) {
+                $invoice = SupplierInvoice::create([
+                    'supplier_id' => $data['supplier_id'],
+                    'number' => $data['invoice_number'],
+                    'invoice_date' => $data['invoice_date'],
+                ]);
+            }
+
             $purchase = Purchase::create([
                 'supplier_id' => $data['supplier_id'],
                 'warehouse_id' => $data['warehouse_id'],
@@ -58,6 +69,7 @@ class PurchaseController extends Controller
                 'exchange_rate_id' => $rate?->id,
                 'total' => 0,
                 'user_id' => Auth::id(),
+                'supplier_invoice_id' => $invoice?->id,
             ]);
 
             $total = 0;
