@@ -30,6 +30,9 @@
                     <x-nav-link href="{{ route('purchases.index') }}" :active="request()->routeIs('purchases.*')">
                         {{ __('Purchases') }}
                     </x-nav-link>
+                    <x-nav-link href="{{ route('supplier-invoices.index') }}" :active="request()->routeIs('supplier-invoices.*')">
+                        {{ __('Supplier Invoices') }}
+                    </x-nav-link>
                     <x-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                         {{ __('Sales') }}
                     </x-nav-link>
@@ -194,6 +197,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('purchases.index') }}" :active="request()->routeIs('purchases.*')">
                 {{ __('Purchases') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link href="{{ route('supplier-invoices.index') }}" :active="request()->routeIs('supplier-invoices.*')">
+                {{ __('Supplier Invoices') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link href="{{ route('sales.index') }}" :active="request()->routeIs('sales.*')">
                 {{ __('Sales') }}

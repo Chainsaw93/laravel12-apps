@@ -15,6 +15,7 @@ use App\Http\Controllers\{
     InvoiceController,
     ExchangeRateController,
     PurchaseController,
+    SupplierInvoiceController,
     RoleController
 };
 
@@ -66,6 +67,7 @@ Route::middleware([
     Route::resource('clients', ClientController::class);
     Route::resource('exchange-rates', ExchangeRateController::class)->only(['index','store','update','destroy']);
     Route::resource('purchases', PurchaseController::class)->only(['index','create','store']);
+    Route::resource('supplier-invoices', SupplierInvoiceController::class)->only(['index','create','store']);
 
     Route::middleware('role:admin')->group(function () {
         Route::resource('roles', RoleController::class)->except('show');

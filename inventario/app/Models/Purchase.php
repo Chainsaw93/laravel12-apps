@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Purchase extends Model
 {
@@ -14,6 +15,7 @@ class Purchase extends Model
         'exchange_rate_id',
         'total',
         'user_id',
+        'supplier_invoice_id',
     ];
 
     public function supplier()
@@ -39,5 +41,10 @@ class Purchase extends Model
     public function indirectCosts(): HasMany
     {
         return $this->hasMany(IndirectCost::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(SupplierInvoice::class, 'supplier_invoice_id');
     }
 }
