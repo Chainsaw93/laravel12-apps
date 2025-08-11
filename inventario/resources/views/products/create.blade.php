@@ -29,6 +29,18 @@
                     <input id="price" name="price" type="number" step="0.01" min="0" value="{{ old('price') }}" class="mt-1 block w-full rounded-md border-gray-300">
                 </div>
                 <div>
+                    <label for="cost" class="block text-sm font-medium text-gray-700">Cost</label>
+                    <input id="cost" name="cost" type="number" step="0.01" min="0" value="{{ old('cost') }}" class="mt-1 block w-full rounded-md border-gray-300" required>
+                </div>
+                <div>
+                    <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
+                    <select id="currency" name="currency" class="mt-1 block w-full rounded-md border-gray-300" required>
+                        @foreach(['CUP','USD','MLC'] as $cur)
+                            <option value="{{ $cur }}" @selected(old('currency') == $cur)>{{ $cur }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label for="expiry_date" class="block text-sm font-medium text-gray-700">Expiry Date</label>
                     <input id="expiry_date" name="expiry_date" type="date" value="{{ old('expiry_date') }}" class="mt-1 block w-full rounded-md border-gray-300">
                 </div>
