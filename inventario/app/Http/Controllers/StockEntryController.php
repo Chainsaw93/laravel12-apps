@@ -6,6 +6,7 @@ use App\Models\{Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, I
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use App\Enums\MovementType;
 
 class StockEntryController extends Controller
@@ -24,13 +25,16 @@ class StockEntryController extends Controller
         $data = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'product_id' => 'required|exists:products,id',
-            'unit_id' => 'nullable|exists:units,id',
+            'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
+                ->where(fn ($query) => $query->where('product_id', $request->product_id))],
             'quantity' => 'required|integer|min:1',
             'purchase_price' => 'required|numeric|min:0',
             'currency' => 'required|in:CUP,USD,MLC',
             'exchange_rate_id' => 'required_if:currency,USD,MLC|nullable|exists:exchange_rates,id',
             'reason' => 'nullable|string',
             'description' => 'nullable|string',
+        ], [
+            'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
         ]);
 
         DB::transaction(function () use ($data) {
