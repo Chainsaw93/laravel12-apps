@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Product, Stock, StockMovement, Batch, InventoryMovement};
+use App\Enums\MovementType;
+use App\Models\Batch;
+use App\Models\InventoryMovement;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Enums\MovementType;
 
 class StockAdjustmentController extends Controller
 {
@@ -42,7 +47,7 @@ class StockAdjustmentController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$stock || $stock->quantity < $baseQty) {
+            if (! $stock || $stock->quantity < $baseQty) {
                 throw ValidationException::withMessages([
                     'quantity' => 'Not enough stock',
                 ]);
@@ -54,33 +59,44 @@ class StockAdjustmentController extends Controller
 
             if ($method === 'average') {
                 $unitCost = $stock->average_cost;
-                $costAccum = $unitCost * $remaining;
+                $costAccum = $unitCost * $baseQty;
+                $realCost = 0;
+                $order = $warehouse->valuation_method === 'lifo' ? 'desc' : 'asc';
                 $batches = Batch::where('warehouse_id', $warehouse->id)
                     ->where('product_id', $data['product_id'])
                     ->where('quantity_remaining', '>', 0)
-                    ->orderBy('received_at', 'asc')
+                    ->orderBy('received_at', $order)
                     ->lockForUpdate()
                     ->get();
                 foreach ($batches as $batch) {
-                    if ($remaining <= 0) break;
-                    $take = min($remaining, $batch->quantity_remaining);
-                    $batch->quantity_remaining -= $take;
-                    $batch->total_cost_cup -= $take * $unitCost;
+                    if ($remaining <= 0) {
+                        break;
+                    }
+                    $qtyToRemove = min($remaining, $batch->quantity_remaining);
+                    $batch->quantity_remaining -= $qtyToRemove;
+                    $batchCost = ($batch->unit_cost_cup + $batch->indirect_cost) * $qtyToRemove;
+                    $batch->total_cost_cup -= $batchCost;
                     $batch->save();
                     InventoryMovement::create([
                         'batch_id' => $batch->id,
                         'product_id' => $data['product_id'],
                         'warehouse_id' => $warehouse->id,
                         'movement_type' => MovementType::ADJUSTMENT_NEG,
-                        'quantity' => $take,
-                        'unit_cost_cup' => $unitCost,
-                        'indirect_cost_unit' => 0,
+                        'quantity' => $qtyToRemove,
+                        'unit_cost_cup' => $batch->unit_cost_cup,
+                        'indirect_cost_unit' => $batch->indirect_cost,
                         'currency' => 'CUP',
                         'exchange_rate_id' => null,
-                        'total_cost_cup' => $unitCost * $take,
+                        'total_cost_cup' => $batchCost,
                         'user_id' => Auth::id(),
                     ]);
-                    $remaining -= $take;
+                    $remaining -= $qtyToRemove;
+                    $realCost += $batchCost;
+                }
+                if ($remaining > 0) {
+                    throw ValidationException::withMessages([
+                        'quantity' => 'Not enough stock',
+                    ]);
                 }
             } else {
                 $order = $method === 'fifo' ? 'asc' : 'desc';
@@ -91,7 +107,9 @@ class StockAdjustmentController extends Controller
                     ->lockForUpdate()
                     ->get();
                 foreach ($batches as $batch) {
-                    if ($remaining <= 0) break;
+                    if ($remaining <= 0) {
+                        break;
+                    }
                     $take = min($remaining, $batch->quantity_remaining);
                     $unit = $batch->unit_cost_cup + $batch->indirect_cost;
                     $costAccum += $take * $unit;

@@ -2,18 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Invoice, InvoiceItem, Client, Warehouse, Product, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement, InvoiceReturn, InvoiceReturnItem, InvoiceCancellation};
+use App\Enums\MovementType;
+use App\Enums\PaymentMethod;
+use App\Models\Batch;
+use App\Models\Client;
+use App\Models\ExchangeRate;
+use App\Models\InventoryMovement;
+use App\Models\Invoice;
+use App\Models\InvoiceCancellation;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceReturn;
+use App\Models\InvoiceReturnItem;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\MovementType;
-use App\Enums\PaymentMethod;
 
 class InvoiceController extends Controller
 {
     public function index()
     {
         $invoices = Invoice::with('client')->latest()->get();
+
         return view('invoices.index', compact('invoices'));
     }
 
@@ -22,6 +35,7 @@ class InvoiceController extends Controller
         $rates = ExchangeRate::orderByDesc('effective_date')
             ->get()
             ->keyBy('currency');
+
         return view('invoices.create', [
             'clients' => Client::all(),
             'warehouses' => Warehouse::all(),
@@ -38,7 +52,7 @@ class InvoiceController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'currency' => 'required|in:CUP,USD,MLC',
             'exchange_rate_id' => 'required_if:currency,USD,MLC|exists:exchange_rates,id',
-            'payment_method' => 'required|in:' . implode(',', array_map(fn($m) => $m->value, PaymentMethod::cases())),
+            'payment_method' => 'required|in:'.implode(',', array_map(fn ($m) => $m->value, PaymentMethod::cases())),
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.unit_id' => 'nullable|exists:units,id',
@@ -48,7 +62,7 @@ class InvoiceController extends Controller
         $rate = null;
         if ($data['currency'] !== 'CUP') {
             $rate = ExchangeRate::find($data['exchange_rate_id']);
-            if (!$rate) {
+            if (! $rate) {
                 return back()->withErrors([
                     'exchange_rate_id' => 'Invalid exchange rate',
                 ])->withInput();
@@ -86,7 +100,7 @@ class InvoiceController extends Controller
                     $stock = Stock::where('warehouse_id', $data['warehouse_id'])
                         ->where('product_id', $itemData['product_id'])
                         ->first();
-                    if (!$stock || $stock->quantity < $baseQty) {
+                    if (! $stock || $stock->quantity < $baseQty) {
                         throw new \Exception('Insufficient stock');
                     }
 
@@ -98,36 +112,40 @@ class InvoiceController extends Controller
                     $costAccum = 0;
                     if ($method === 'average') {
                         $unitCost = $stock->average_cost;
-                        $costAccum = $unitCost * $remaining;
+                        $costAccum = $unitCost * $baseQty;
+                        $realCost = 0;
+                        $order = $warehouse->valuation_method === 'lifo' ? 'desc' : 'asc';
                         $batches = Batch::where('warehouse_id', $warehouse->id)
                             ->where('product_id', $itemData['product_id'])
                             ->where('quantity_remaining', '>', 0)
-                            ->orderBy('received_at', 'asc')
+                            ->orderBy('received_at', $order)
                             ->get();
                         foreach ($batches as $batch) {
                             if ($remaining <= 0) {
                                 break;
                             }
-                            $take = min($remaining, $batch->quantity_remaining);
-                            $batch->quantity_remaining -= $take;
-                            $batch->total_cost_cup -= $take * $unitCost;
+                            $qtyToRemove = min($remaining, $batch->quantity_remaining);
+                            $batch->quantity_remaining -= $qtyToRemove;
+                            $batchCost = ($batch->unit_cost_cup + $batch->indirect_cost) * $qtyToRemove;
+                            $batch->total_cost_cup -= $batchCost;
                             $batch->save();
                             InventoryMovement::create([
                                 'batch_id' => $batch->id,
                                 'product_id' => $itemData['product_id'],
                                 'warehouse_id' => $warehouse->id,
                                 'movement_type' => MovementType::OUT,
-                                'quantity' => $take,
-                                'unit_cost_cup' => $unitCost,
-                                'indirect_cost_unit' => 0,
+                                'quantity' => $qtyToRemove,
+                                'unit_cost_cup' => $batch->unit_cost_cup,
+                                'indirect_cost_unit' => $batch->indirect_cost,
                                 'currency' => 'CUP',
                                 'exchange_rate_id' => null,
-                                'total_cost_cup' => $unitCost * $take,
+                                'total_cost_cup' => $batchCost,
                                 'reference_type' => Invoice::class,
                                 'reference_id' => $invoice->id,
                                 'user_id' => Auth::id(),
                             ]);
-                            $remaining -= $take;
+                            $remaining -= $qtyToRemove;
+                            $realCost += $batchCost;
                         }
                         if ($remaining > 0) {
                             throw new \Exception('Insufficient stock');
@@ -191,7 +209,7 @@ class InvoiceController extends Controller
                         'quantity' => $baseQty,
                         'purchase_price' => $unitCost,
                         'currency' => 'CUP',
-                        'reason' => 'Venta factura ' . $invoice->id,
+                        'reason' => 'Venta factura '.$invoice->id,
                         'user_id' => Auth::id(),
                     ]);
 
@@ -223,6 +241,7 @@ class InvoiceController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['items' => $e->getMessage()]);
         }
+
         return back();
     }
 
@@ -244,7 +263,7 @@ class InvoiceController extends Controller
                     }
                 }
                 if ($items) {
-                    $this->processReturn($invoice, $items, 'Cancellation: ' . $data['reason']);
+                    $this->processReturn($invoice, $items, 'Cancellation: '.$data['reason']);
                 }
                 $invoice->update(['status' => 'cancelled']);
                 InvoiceCancellation::create([
@@ -257,6 +276,7 @@ class InvoiceController extends Controller
         } catch (\Throwable $e) {
             return back()->withErrors(['invoice' => $e->getMessage()]);
         }
+
         return redirect()->route('sales.index');
     }
 
@@ -264,6 +284,7 @@ class InvoiceController extends Controller
     {
         $invoice->update(['status' => 'approved']);
         $invoice->recordActivity('approved');
+
         return back();
     }
 
@@ -318,7 +339,7 @@ class InvoiceController extends Controller
                 'purchase_price' => $invoiceItem->cost,
                 'currency' => 'CUP',
                 'exchange_rate_id' => null,
-                'reason' => 'Devolución factura ' . $invoice->id,
+                'reason' => 'Devolución factura '.$invoice->id,
                 'user_id' => Auth::id(),
             ]);
 
