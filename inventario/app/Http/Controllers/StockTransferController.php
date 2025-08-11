@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Product, Stock, StockMovement, Batch, InventoryMovement};
+use App\Enums\MovementType;
+use App\Models\Batch;
+use App\Models\InventoryMovement;
+use App\Models\Product;
+use App\Models\Stock;
+use App\Models\StockMovement;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Enums\MovementType;
 
 class StockTransferController extends Controller
 {
@@ -15,6 +20,7 @@ class StockTransferController extends Controller
     {
         $warehouses = Warehouse::all();
         $products = Product::all();
+
         return view('transfers.create', compact('warehouses', 'products'));
     }
 
@@ -43,7 +49,7 @@ class StockTransferController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (!$from || $from->quantity < $baseQty) {
+                if (! $from || $from->quantity < $baseQty) {
                     throw ValidationException::withMessages([
                         'quantity' => 'Not enough stock in origin warehouse',
                     ]);
@@ -54,7 +60,7 @@ class StockTransferController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                if (!$to) {
+                if (! $to) {
                     $to = Stock::create([
                         'warehouse_id' => $toWarehouse->id,
                         'product_id' => $data['product_id'],
@@ -85,42 +91,44 @@ class StockTransferController extends Controller
                 $costAccum = 0;
 
                 if ($method === 'average') {
-                    $unitCost = $costCup;
-                    $costAccum = $unitCost * $remaining;
+                    $order = $fromWarehouse->valuation_method === 'lifo' ? 'desc' : 'asc';
                     $batches = Batch::where('warehouse_id', $fromWarehouse->id)
                         ->where('product_id', $data['product_id'])
                         ->where('quantity_remaining', '>', 0)
-                        ->orderBy('received_at', 'asc')
+                        ->orderBy('received_at', $order)
                         ->lockForUpdate()
                         ->get();
                     foreach ($batches as $batch) {
-                        if ($remaining <= 0) break;
-                        $take = min($remaining, $batch->quantity_remaining);
-                        $batch->quantity_remaining -= $take;
-                        $batch->total_cost_cup -= $take * $unitCost;
+                        if ($remaining <= 0) {
+                            break;
+                        }
+                        $qtyToRemove = min($remaining, $batch->quantity_remaining);
+                        $batch->quantity_remaining -= $qtyToRemove;
+                        $batchCost = ($batch->unit_cost_cup + $batch->indirect_cost) * $qtyToRemove;
+                        $batch->total_cost_cup -= $batchCost;
                         $batch->save();
                         InventoryMovement::create([
                             'batch_id' => $batch->id,
                             'product_id' => $data['product_id'],
                             'warehouse_id' => $fromWarehouse->id,
                             'movement_type' => MovementType::TRANSFER_OUT,
-                            'quantity' => $take,
-                            'unit_cost_cup' => $unitCost,
-                            'indirect_cost_unit' => 0,
+                            'quantity' => $qtyToRemove,
+                            'unit_cost_cup' => $batch->unit_cost_cup,
+                            'indirect_cost_unit' => $batch->indirect_cost,
                             'currency' => $currency,
                             'exchange_rate_id' => $exchangeRateId,
-                            'total_cost_cup' => $unitCost * $take,
+                            'total_cost_cup' => $batchCost,
                             'user_id' => Auth::id(),
                         ]);
 
                         $newBatch = Batch::create([
                             'product_id' => $data['product_id'],
                             'warehouse_id' => $toWarehouse->id,
-                            'quantity_remaining' => $take,
-                            'unit_cost_cup' => $unitCost,
+                            'quantity_remaining' => $qtyToRemove,
+                            'unit_cost_cup' => $batch->unit_cost_cup,
                             'currency' => $currency,
-                            'indirect_cost' => 0,
-                            'total_cost_cup' => $unitCost * $take,
+                            'indirect_cost' => $batch->indirect_cost,
+                            'total_cost_cup' => $batchCost,
                             'received_at' => now(),
                         ]);
                         InventoryMovement::create([
@@ -128,16 +136,22 @@ class StockTransferController extends Controller
                             'product_id' => $data['product_id'],
                             'warehouse_id' => $toWarehouse->id,
                             'movement_type' => MovementType::TRANSFER_IN,
-                            'quantity' => $take,
-                            'unit_cost_cup' => $unitCost,
-                            'indirect_cost_unit' => 0,
+                            'quantity' => $qtyToRemove,
+                            'unit_cost_cup' => $batch->unit_cost_cup,
+                            'indirect_cost_unit' => $batch->indirect_cost,
                             'currency' => $currency,
                             'exchange_rate_id' => $exchangeRateId,
-                            'total_cost_cup' => $unitCost * $take,
+                            'total_cost_cup' => $batchCost,
                             'user_id' => Auth::id(),
                         ]);
 
-                        $remaining -= $take;
+                        $remaining -= $qtyToRemove;
+                        $costAccum += $batchCost;
+                    }
+                    if ($remaining > 0) {
+                        throw ValidationException::withMessages([
+                            'quantity' => 'Not enough stock in origin warehouse',
+                        ]);
                     }
                 } else {
                     $order = $method === 'fifo' ? 'asc' : 'desc';
@@ -148,7 +162,9 @@ class StockTransferController extends Controller
                         ->lockForUpdate()
                         ->get();
                     foreach ($batches as $batch) {
-                        if ($remaining <= 0) break;
+                        if ($remaining <= 0) {
+                            break;
+                        }
                         $take = min($remaining, $batch->quantity_remaining);
                         $unit = $batch->unit_cost_cup + $batch->indirect_cost;
                         $costAccum += $take * $unit;
@@ -219,7 +235,7 @@ class StockTransferController extends Controller
                     'purchase_price' => $purchasePrice,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,
-                    'reason' => 'Transfer to warehouse ' . $toWarehouse->name,
+                    'reason' => 'Transfer to warehouse '.$toWarehouse->name,
                     'user_id' => Auth::id(),
                 ]);
 
@@ -230,7 +246,7 @@ class StockTransferController extends Controller
                     'purchase_price' => $purchasePrice,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,
-                    'reason' => 'Transfer from warehouse ' . $fromWarehouse->name,
+                    'reason' => 'Transfer from warehouse '.$fromWarehouse->name,
                     'user_id' => Auth::id(),
                 ]);
             });
