@@ -34,11 +34,29 @@
                 </div>
                 <div>
                     <label for="currency" class="block text-sm font-medium text-gray-700">Currency</label>
-                    <select id="currency" name="currency" class="mt-1 block w-full rounded-md border-gray-300" required>
+                    <select id="currency" name="currency" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="">--</option>
                         @foreach(['CUP','USD','MLC'] as $cur)
                             <option value="{{ $cur }}" @selected(old('currency') == $cur)>{{ $cur }}</option>
                         @endforeach
                     </select>
+                </div>
+                <div>
+                    <label for="warehouse_id" class="block text-sm font-medium text-gray-700">Warehouse</label>
+                    <select id="warehouse_id" name="warehouse_id" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="">--</option>
+                        @foreach ($warehouses as $warehouse)
+                            <option value="{{ $warehouse->id }}" @selected(old('warehouse_id') == $warehouse->id)>{{ $warehouse->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                    <input id="quantity" name="quantity" type="number" min="1" value="{{ old('quantity') }}" class="mt-1 block w-full rounded-md border-gray-300">
+                </div>
+                <div>
+                    <label for="purchase_price" class="block text-sm font-medium text-gray-700">Purchase Price</label>
+                    <input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" value="{{ old('purchase_price') }}" class="mt-1 block w-full rounded-md border-gray-300">
                 </div>
                 <div>
                     <label for="expiry_date" class="block text-sm font-medium text-gray-700">Expiry Date</label>
