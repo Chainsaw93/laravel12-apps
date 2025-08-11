@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\{User, Unit};
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -18,6 +18,11 @@ class DatabaseSeeder extends Seeder
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role]);
         }
+
+        Unit::firstOrCreate(
+            ['name' => 'Piece'],
+            ['abbreviation' => 'pc']
+        );
 
         $user = User::factory()->create([
             'name' => 'Test User',

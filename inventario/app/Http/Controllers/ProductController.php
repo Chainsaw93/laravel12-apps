@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Product, Category, Warehouse, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement};
+use App\Models\{Product, Category, Warehouse, Stock, StockMovement, ExchangeRate, Batch, InventoryMovement, Unit};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Storage, Validator, DB, Auth};
 use Illuminate\Support\Arr;
@@ -47,6 +47,7 @@ class ProductController extends Controller
         return view('products.create', [
             'categories' => Category::all(),
             'warehouses' => Warehouse::all(),
+            'units' => Unit::all(),
         ]);
     }
 
@@ -55,6 +56,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
             'category_id' => 'required|exists:categories,id',
+            'unit_id' => 'nullable|exists:units,id',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'cost' => 'required|numeric|min:0',
@@ -150,6 +152,7 @@ class ProductController extends Controller
         return view('products.edit', [
             'product' => $product,
             'categories' => Category::all(),
+            'units' => Unit::all(),
         ]);
     }
 
@@ -158,6 +161,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'name' => 'required|string',
             'category_id' => 'required|exists:categories,id',
+            'unit_id' => 'nullable|exists:units,id',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
             'cost' => 'required|numeric|min:0',

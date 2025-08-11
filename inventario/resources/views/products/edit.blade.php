@@ -22,6 +22,15 @@
                     </select>
                 </div>
                 <div>
+                    <label for="unit_id" class="block text-sm font-medium text-gray-700">Unit</label>
+                    <select id="unit_id" name="unit_id" class="mt-1 block w-full rounded-md border-gray-300">
+                        <option value="">--</option>
+                        @foreach ($units as $unit)
+                            <option value="{{ $unit->id }}" @selected(old('unit_id', $product->unit_id) == $unit->id)>{{ $unit->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
                     <textarea id="description" name="description" class="mt-1 block w-full rounded-md border-gray-300">{{ old('description', $product->description) }}</textarea>
                 </div>
