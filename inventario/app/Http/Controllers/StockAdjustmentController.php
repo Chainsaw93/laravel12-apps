@@ -62,9 +62,6 @@ class StockAdjustmentController extends Controller
             $costAccum = 0;
 
             if ($method === 'average') {
-                $unitCost = $stock->average_cost;
-                $costAccum = $unitCost * $baseQty;
-                $realCost = 0;
                 $order = $warehouse->valuation_method === 'lifo' ? 'desc' : 'asc';
                 $batches = Batch::where('warehouse_id', $warehouse->id)
                     ->where('product_id', $data['product_id'])
@@ -94,8 +91,8 @@ class StockAdjustmentController extends Controller
                         'total_cost_cup' => $batchCost,
                         'user_id' => Auth::id(),
                     ]);
+                    $costAccum += $batchCost;
                     $remaining -= $qtyToRemove;
-                    $realCost += $batchCost;
                 }
                 if ($remaining > 0) {
                     throw ValidationException::withMessages([
@@ -140,8 +137,9 @@ class StockAdjustmentController extends Controller
                         'quantity' => 'Not enough stock',
                     ]);
                 }
-                $unitCost = $costAccum / $baseQty;
             }
+
+            $unitCost = $costAccum / $baseQty;
 
             $stock->decrement('quantity', $baseQty);
 
