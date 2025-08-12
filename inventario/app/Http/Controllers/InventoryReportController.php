@@ -80,8 +80,8 @@ class InventoryReportController extends Controller
             ->when($request->product_id, fn($q, $p) => $q->whereHas('stock', fn($sq) => $sq->where('product_id', $p)))
             ->when($request->type && in_array($request->type, ['in','out']), function($q, $t) {
                 $types = $t === 'in'
-                    ? ['in', 'transfer_in']
-                    : ['out', 'transfer_out', 'adjustment'];
+                    ? ['in', 'transfer_in', 'adjustment_pos']
+                    : ['out', 'transfer_out', 'adjustment_neg'];
                 $q->whereIn('type', $types);
             })
             ->leftJoin('exchange_rates', 'exchange_rates.id', '=', 'stock_movements.exchange_rate_id');
