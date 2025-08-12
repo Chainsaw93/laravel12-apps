@@ -63,9 +63,10 @@ class InvoiceController extends Controller
         ]);
 
         foreach ($data['items'] as $item) {
+            $product_id = $item['product_id'];
             Validator::make($item, [
                 'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
-                    ->where(fn ($query) => $query->where('product_id', $item['product_id']))],
+                    ->where(fn ($q) => $q->where('product_id', $product_id))],
             ], [
                 'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
             ])->validate();
