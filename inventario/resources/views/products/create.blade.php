@@ -64,8 +64,8 @@
                     <input id="quantity" name="quantity" type="number" min="1" value="{{ old('quantity') }}" class="mt-1 block w-full rounded-md border-gray-300">
                 </div>
                 <div>
-                    <label for="purchase_price" class="block text-sm font-medium text-gray-700">Purchase Price</label>
-                    <input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" value="{{ old('purchase_price') }}" class="mt-1 block w-full rounded-md border-gray-300">
+                    <label for="unit_cost" class="block text-sm font-medium text-gray-700">Unit Cost</label>
+                    <input id="unit_cost" name="unit_cost" type="number" step="0.01" min="0" value="{{ old('unit_cost') }}" class="mt-1 block w-full rounded-md border-gray-300">
                 </div>
                 <div>
                     <label for="expiry_date" class="block text-sm font-medium text-gray-700">Expiry Date</label>

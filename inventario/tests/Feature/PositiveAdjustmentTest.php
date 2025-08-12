@@ -27,7 +27,7 @@ class PositiveAdjustmentTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 5,
-            'purchase_price' => 3,
+            'unit_cost' => 3,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
             'reason' => 'Found stock',
@@ -62,7 +62,7 @@ class PositiveAdjustmentTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 1,
-            'purchase_price' => 2,
+            'unit_cost' => 2,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
         ]);

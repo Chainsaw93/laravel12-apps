@@ -29,8 +29,8 @@
                         <x-input id="quantity" name="quantity" type="number" min="1" class="mt-1 block w-full" required />
                     </div>
                     <div>
-                        <x-label for="purchase_price" :value="__('Purchase Price')" />
-                        <x-input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" class="mt-1 block w-full" required />
+                        <x-label for="unit_cost" :value="__('Unit Cost')" />
+                        <x-input id="unit_cost" name="unit_cost" type="number" step="0.01" min="0" class="mt-1 block w-full" required />
                     </div>
                     <div>
                         <x-label for="currency" :value="__('Currency')" />

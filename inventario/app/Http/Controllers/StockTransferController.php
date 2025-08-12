@@ -82,7 +82,7 @@ class StockTransferController extends Controller
                 $rate = null;
 
                 $lastMovement = StockMovement::where('stock_id', $from->id)
-                    ->whereNotNull('purchase_price')
+                    ->whereNotNull('unit_cost')
                     ->orderByDesc('id')
                     ->first();
 
@@ -218,10 +218,10 @@ class StockTransferController extends Controller
                     }
                 }
 
-                $unitCost = $costAccum / $baseQty;
-                $purchasePrice = $unitCost;
+                $unitCostCup = $costAccum / $baseQty;
+                $unitCost = $unitCostCup;
                 if ($rate) {
-                    $purchasePrice = $unitCost / $rate->rate_to_cup;
+                    $unitCost = $unitCostCup / $rate->rate_to_cup;
                 }
                 $from->decrement('quantity', $baseQty);
 
@@ -237,7 +237,7 @@ class StockTransferController extends Controller
                     'stock_id' => $from->id,
                     'type' => MovementType::TRANSFER_OUT,
                     'quantity' => $baseQty,
-                    'purchase_price' => $purchasePrice,
+                    'unit_cost' => $unitCost,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,
                     'reason' => 'Transfer to warehouse '.$toWarehouse->name,
@@ -248,7 +248,7 @@ class StockTransferController extends Controller
                     'stock_id' => $to->id,
                     'type' => MovementType::TRANSFER_IN,
                     'quantity' => $baseQty,
-                    'purchase_price' => $purchasePrice,
+                    'unit_cost' => $unitCost,
                     'currency' => $currency,
                     'exchange_rate_id' => $exchangeRateId,
                     'reason' => 'Transfer from warehouse '.$fromWarehouse->name,

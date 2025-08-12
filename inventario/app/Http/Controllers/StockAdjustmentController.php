@@ -40,7 +40,7 @@ class StockAdjustmentController extends Controller
                 'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
                     ->where(fn ($q) => $q->where('product_id', $product_id))],
                 'quantity' => 'required|integer|min:1',
-                'purchase_price' => 'required|numeric|min:0',
+                'unit_cost' => 'required|numeric|min:0',
                 'currency' => 'required|in:CUP,USD,MLC',
                 'exchange_rate_id' => 'required_if:currency,USD,MLC|nullable|exists:exchange_rates,id',
                 'reason' => 'required|string',
@@ -67,8 +67,8 @@ class StockAdjustmentController extends Controller
                     $data['exchange_rate_id'] = null;
                 }
 
-                $currencyPrice = $data['purchase_price'] / $factor;
-                $costCup = $rate ? $currencyPrice * $rate->rate_to_cup : $currencyPrice;
+                $currencyCost = $data['unit_cost'] / $factor;
+                $costCup = $rate ? $currencyCost * $rate->rate_to_cup : $currencyCost;
 
                 $oldQuantity = $stock->quantity;
                 $oldCost = $stock->average_cost;
@@ -82,7 +82,7 @@ class StockAdjustmentController extends Controller
                     'stock_id' => $stock->id,
                     'type' => MovementType::ADJUSTMENT_POS,
                     'quantity' => $baseQty,
-                    'purchase_price' => $currencyPrice,
+                    'unit_cost' => $currencyCost,
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
                     'reason' => $data['reason'],
@@ -237,7 +237,7 @@ class StockAdjustmentController extends Controller
                     'stock_id' => $stock->id,
                     'type' => MovementType::ADJUSTMENT_NEG,
                     'quantity' => $baseQty,
-                    'purchase_price' => $unitCost,
+                    'unit_cost' => $unitCost,
                     'currency' => 'CUP',
                     'reason' => $data['reason'],
                     'description' => $data['description'] ?? null,

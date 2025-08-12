@@ -26,7 +26,7 @@ class NegativeAdjustmentTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 10,
-            'purchase_price' => 5,
+            'unit_cost' => 5,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
         ]);

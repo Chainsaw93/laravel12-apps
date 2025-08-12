@@ -36,8 +36,8 @@
                     </div>
                     <div id="positive_fields" class="space-y-4 hidden">
                         <div>
-                            <x-label for="purchase_price" :value="__('Purchase Price')" />
-                            <x-input id="purchase_price" name="purchase_price" type="number" step="0.01" min="0" class="mt-1 block w-full" />
+                            <x-label for="unit_cost" :value="__('Unit Cost')" />
+                            <x-input id="unit_cost" name="unit_cost" type="number" step="0.01" min="0" class="mt-1 block w-full" />
                         </div>
                         <div>
                             <x-label for="currency" :value="__('Currency')" />

@@ -63,7 +63,7 @@ class ProductController extends Controller
             'currency' => 'nullable|in:CUP,USD,MLC',
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'quantity' => 'nullable|integer|min:1',
-            'purchase_price' => 'nullable|numeric|min:0',
+            'unit_cost' => 'nullable|numeric|min:0',
             'expiry_date' => 'nullable|date|after:today',
             'sku' => 'required|string|unique:products,sku',
             'cropped_image' => 'nullable|string',
@@ -73,7 +73,7 @@ class ProductController extends Controller
             $data['image_path'] = $this->storeCroppedImage($request->cropped_image);
         }
 
-        $productData = Arr::whereNotNull(Arr::except($data, ['warehouse_id', 'quantity', 'purchase_price']));
+        $productData = Arr::whereNotNull(Arr::except($data, ['warehouse_id', 'quantity', 'unit_cost']));
 
         DB::transaction(function () use ($data, $productData) {
             $product = Product::create($productData);
@@ -81,7 +81,7 @@ class ProductController extends Controller
             if (
                 !empty($data['warehouse_id']) &&
                 !empty($data['quantity']) &&
-                !empty($data['purchase_price']) &&
+                !empty($data['unit_cost']) &&
                 !empty($data['currency'])
             ) {
                 $stock = Stock::firstOrCreate(
@@ -96,8 +96,8 @@ class ProductController extends Controller
                     $rate = ExchangeRate::where('currency', $data['currency'])->orderByDesc('effective_date')->first();
                 }
 
-                $currencyPrice = $data['purchase_price'];
-                $costCup = $rate ? $currencyPrice * $rate->rate_to_cup : $currencyPrice;
+                $currencyCost = $data['unit_cost'];
+                $costCup = $rate ? $currencyCost * $rate->rate_to_cup : $currencyCost;
 
                 $oldQuantity = $stock->quantity;
                 $oldCost = $stock->average_cost;
@@ -111,7 +111,7 @@ class ProductController extends Controller
                     'stock_id' => $stock->id,
                     'type' => MovementType::IN,
                     'quantity' => $baseQty,
-                    'purchase_price' => $currencyPrice,
+                    'unit_cost' => $currencyCost,
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
                     'user_id' => Auth::id(),
