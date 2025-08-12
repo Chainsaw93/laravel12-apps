@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\{User, Category, Product, Warehouse, Stock, StockMovement};
+use App\Models\{User, Category, Product, Warehouse, StockMovement, Stock};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Enums\MovementType;
 
-class NegativeAdjustmentTest extends TestCase
+class PositiveAdjustmentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_negative_adjustment_decreases_stock_and_records_reason(): void
+    public function test_positive_adjustment_increases_stock_and_records_reason(): void
     {
         $user = User::factory()->create();
         $category = Category::create(['name' => 'General']);
@@ -22,21 +22,15 @@ class NegativeAdjustmentTest extends TestCase
         ]);
         $warehouse = Warehouse::create(['name' => 'Main']);
 
-        $this->actingAs($user)->post('/entries', [
+        $response = $this->actingAs($user)->post('/adjustments', [
+            'type' => 'pos',
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
-            'quantity' => 10,
-            'purchase_price' => 5,
+            'quantity' => 5,
+            'purchase_price' => 3,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
-        ]);
-
-        $response = $this->actingAs($user)->post('/adjustments', [
-            'type' => 'neg',
-            'warehouse_id' => $warehouse->id,
-            'product_id' => $product->id,
-            'quantity' => 3,
-            'reason' => 'Damaged stock',
+            'reason' => 'Found stock',
         ]);
 
         $response->assertRedirect('/warehouses/' . $warehouse->id);
@@ -44,14 +38,15 @@ class NegativeAdjustmentTest extends TestCase
         $stock = Stock::where('warehouse_id', $warehouse->id)
             ->where('product_id', $product->id)
             ->first();
-        $this->assertEquals(7, $stock->quantity);
+        $this->assertEquals(5, $stock->quantity);
+        $this->assertEquals(3, $stock->average_cost);
 
         $movement = StockMovement::orderByDesc('id')->first();
-        $this->assertEquals(MovementType::ADJUSTMENT_NEG, $movement->type);
-        $this->assertEquals('Damaged stock', $movement->reason);
+        $this->assertEquals(MovementType::ADJUSTMENT_POS, $movement->type);
+        $this->assertEquals('Found stock', $movement->reason);
     }
 
-    public function test_reason_is_required_for_negative_adjustment(): void
+    public function test_reason_is_required_for_positive_adjustment(): void
     {
         $user = User::factory()->create();
         $category = Category::create(['name' => 'General']);
@@ -61,21 +56,21 @@ class NegativeAdjustmentTest extends TestCase
             'category_id' => $category->id,
         ]);
         $warehouse = Warehouse::create(['name' => 'Main']);
-        $stock = Stock::create([
-            'warehouse_id' => $warehouse->id,
-            'product_id' => $product->id,
-            'quantity' => 5,
-            'average_cost' => 0,
-        ]);
 
         $response = $this->actingAs($user)->post('/adjustments', [
-            'type' => 'neg',
+            'type' => 'pos',
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 1,
+            'purchase_price' => 2,
+            'currency' => 'CUP',
+            'exchange_rate_id' => null,
         ]);
 
         $response->assertSessionHasErrors('reason');
-        $this->assertEquals(5, $stock->fresh()->quantity);
+        $stock = Stock::where('warehouse_id', $warehouse->id)
+            ->where('product_id', $product->id)
+            ->first();
+        $this->assertNull($stock);
     }
 }
