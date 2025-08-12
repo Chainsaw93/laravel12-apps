@@ -27,11 +27,12 @@ class StockAdjustmentController extends Controller
 
     public function store(Request $request)
     {
+        $product_id = $request->product_id;
         $data = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'product_id' => 'required|exists:products,id',
             'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
-                ->where(fn ($query) => $query->where('product_id', $request->product_id))],
+                ->where(fn ($q) => $q->where('product_id', $product_id))],
             'quantity' => 'required|integer|min:1',
             'reason' => 'required|string',
             'description' => 'nullable|string',
