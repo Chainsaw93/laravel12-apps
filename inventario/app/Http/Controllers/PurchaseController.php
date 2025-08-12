@@ -99,7 +99,7 @@ class PurchaseController extends Controller
                     ['quantity' => 0, 'average_cost' => 0]
                 );
 
-                PurchaseItem::create([
+                $purchaseItem = PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => $item['product_id'],
                     'unit_id' => $unitId,
@@ -157,6 +157,8 @@ class PurchaseController extends Controller
                     'total_cost_cup' => $costCup * $baseQty,
                     'received_at' => now(),
                 ]);
+
+                $purchaseItem->update(['batch_id' => $batch->id]);
 
                 InventoryMovement::create([
                     'batch_id' => $batch->id,
