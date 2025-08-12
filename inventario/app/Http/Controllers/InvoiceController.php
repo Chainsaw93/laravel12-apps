@@ -84,6 +84,7 @@ class InvoiceController extends Controller
         }
 
         try {
+            // All stock and batch operations must occur inside this transaction.
             DB::transaction(function () use ($data, $rate) {
                 $warehouse = Warehouse::find($data['warehouse_id']);
 
@@ -111,6 +112,7 @@ class InvoiceController extends Controller
 
                     $stock = Stock::where('warehouse_id', $data['warehouse_id'])
                         ->where('product_id', $itemData['product_id'])
+                        ->lockForUpdate()
                         ->first();
                     if (! $stock || $stock->quantity < $baseQty) {
                         throw new \Exception('Insufficient stock');
@@ -128,6 +130,7 @@ class InvoiceController extends Controller
                             ->where('product_id', $itemData['product_id'])
                             ->where('quantity_remaining', '>', 0)
                             ->orderBy('received_at', $order)
+                            ->lockForUpdate()
                             ->get();
                         foreach ($batches as $batch) {
                             if ($remaining <= 0) {
@@ -165,6 +168,7 @@ class InvoiceController extends Controller
                             ->where('product_id', $itemData['product_id'])
                             ->where('quantity_remaining', '>', 0)
                             ->orderBy('received_at', $order)
+                            ->lockForUpdate()
                             ->get();
                         foreach ($batches as $batch) {
                             if ($remaining <= 0) {
@@ -245,6 +249,7 @@ class InvoiceController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
         try {
+            // Ensure stock and batches are locked within a single transaction.
             DB::transaction(function () use ($invoice, $data) {
                 $this->processReturn($invoice, $data['items'], $data['reason'] ?? null);
             });
@@ -261,6 +266,7 @@ class InvoiceController extends Controller
             'reason' => 'required|string',
         ]);
         try {
+            // Ensure stock and batches are locked within a single transaction.
             DB::transaction(function () use ($invoice, $data) {
                 $items = [];
                 foreach ($invoice->items as $item) {
@@ -298,6 +304,11 @@ class InvoiceController extends Controller
         return back();
     }
 
+    /**
+     * Process returned items and update stock.
+     *
+     * This method must be executed inside a DB transaction.
+     */
     protected function processReturn(Invoice $invoice, array $items, ?string $reason = null): InvoiceReturn
     {
         $return = InvoiceReturn::create([
@@ -331,10 +342,19 @@ class InvoiceController extends Controller
 
             $invoiceItem->increment('returned_quantity', $itemData['quantity']);
 
-            $stock = Stock::firstOrCreate(
-                ['warehouse_id' => $invoice->warehouse_id, 'product_id' => $invoiceItem->product_id],
-                ['quantity' => 0, 'average_cost' => 0]
-            );
+            $stock = Stock::where('warehouse_id', $invoice->warehouse_id)
+                ->where('product_id', $invoiceItem->product_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $stock) {
+                $stock = Stock::create([
+                    'warehouse_id' => $invoice->warehouse_id,
+                    'product_id' => $invoiceItem->product_id,
+                    'quantity' => 0,
+                    'average_cost' => 0,
+                ]);
+            }
 
             $oldQuantity = $stock->quantity;
             $oldCost = $stock->average_cost;
