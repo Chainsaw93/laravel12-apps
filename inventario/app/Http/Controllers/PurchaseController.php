@@ -140,7 +140,7 @@ class PurchaseController extends Controller
                     'stock_id' => $stock->id,
                     'type' => MovementType::IN,
                     'quantity' => $baseQty,
-                    'purchase_price' => $currencyCost,
+                    'unit_cost' => $currencyCost,
                     'currency' => $data['currency'],
                     'exchange_rate_id' => $rate?->id,
                     'reason' => 'Compra ' . $purchase->id,

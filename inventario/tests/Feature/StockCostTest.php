@@ -27,7 +27,7 @@ class StockCostTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 10,
-            'purchase_price' => 10,
+            'unit_cost' => 10,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
         ]);
@@ -36,7 +36,7 @@ class StockCostTest extends TestCase
             'warehouse_id' => $warehouse->id,
             'product_id' => $product->id,
             'quantity' => 10,
-            'purchase_price' => 20,
+            'unit_cost' => 20,
             'currency' => 'CUP',
             'exchange_rate_id' => null,
         ]);

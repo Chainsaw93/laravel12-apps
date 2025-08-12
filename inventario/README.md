@@ -59,3 +59,7 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Stock Movements
+
+The `unit_cost` column in the `stock_movements` table always represents the value per base unit in the currency indicated by the `currency` field.

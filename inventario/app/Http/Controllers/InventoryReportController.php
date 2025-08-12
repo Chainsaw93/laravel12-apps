@@ -90,10 +90,10 @@ class InventoryReportController extends Controller
             ->selectRaw(
                 'stock_movements.type, '
                 . 'sum(stock_movements.quantity) as quantity, '
-                . "sum(case when stock_movements.currency = 'CUP' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as cup_value, "
-                . "sum(case when stock_movements.currency = 'USD' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as usd_value, "
-                . "sum(case when stock_movements.currency = 'MLC' then stock_movements.quantity * coalesce(stock_movements.purchase_price,0) else 0 end) as mlc_value, "
-                . 'sum(stock_movements.quantity * coalesce(stock_movements.purchase_price,0) * coalesce(exchange_rates.rate_to_cup,1)) as total_cup'
+                . "sum(case when stock_movements.currency = 'CUP' then stock_movements.quantity * coalesce(stock_movements.unit_cost,0) else 0 end) as cup_value, "
+                . "sum(case when stock_movements.currency = 'USD' then stock_movements.quantity * coalesce(stock_movements.unit_cost,0) else 0 end) as usd_value, "
+                . "sum(case when stock_movements.currency = 'MLC' then stock_movements.quantity * coalesce(stock_movements.unit_cost,0) else 0 end) as mlc_value, "
+                . 'sum(stock_movements.quantity * coalesce(stock_movements.unit_cost,0) * coalesce(exchange_rates.rate_to_cup,1)) as total_cup'
             )
             ->groupBy('stock_movements.type')
             ->orderBy('stock_movements.type')

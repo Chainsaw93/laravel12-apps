@@ -33,7 +33,7 @@ class TransferCostCurrencyTest extends TestCase
             'warehouse_id' => $fromWarehouse->id,
             'product_id' => $product->id,
             'quantity' => 10,
-            'purchase_price' => 10,
+            'unit_cost' => 10,
             'currency' => 'USD',
             'exchange_rate_id' => $rate->id,
         ]);
@@ -63,11 +63,11 @@ class TransferCostCurrencyTest extends TestCase
             ->latest()
             ->first();
 
-        $this->assertEquals(10.0, $outMovement->purchase_price);
+        $this->assertEquals(10.0, $outMovement->unit_cost);
         $this->assertEquals('USD', $outMovement->currency);
         $this->assertEquals($rate->id, $outMovement->exchange_rate_id);
 
-        $this->assertEquals(10.0, $inMovement->purchase_price);
+        $this->assertEquals(10.0, $inMovement->unit_cost);
         $this->assertEquals('USD', $inMovement->currency);
         $this->assertEquals($rate->id, $inMovement->exchange_rate_id);
     }
