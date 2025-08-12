@@ -330,7 +330,17 @@ class InvoiceController extends Controller
                 throw new \Exception('Return quantity exceeds available amount');
             }
             $amount = $itemData['quantity'] * $invoiceItem->price;
-            $cost = $itemData['quantity'] * $invoiceItem->cost;
+
+            $unitCostCup = $invoiceItem->total_cost / $invoiceItem->quantity;
+            if ($invoice->currency !== 'CUP') {
+                $rate = $invoice->exchangeRate;
+                $directCostCup = $invoiceItem->cost * $rate->rate_to_cup;
+                $indirectUnit = $unitCostCup - $directCostCup;
+            } else {
+                $directCostCup = $invoiceItem->cost;
+                $indirectUnit = 0;
+            }
+            $cost = $itemData['quantity'] * $unitCostCup;
 
             InvoiceReturnItem::create([
                 'invoice_return_id' => $return->id,
@@ -359,14 +369,15 @@ class InvoiceController extends Controller
             $oldQuantity = $stock->quantity;
             $oldCost = $stock->average_cost;
             $stock->increment('quantity', $itemData['quantity']);
-            $newAvg = (($oldQuantity * $oldCost) + ($itemData['quantity'] * $invoiceItem->cost)) / ($oldQuantity + $itemData['quantity']);
+            $perUnitTotal = $directCostCup + $indirectUnit;
+            $newAvg = (($oldQuantity * $oldCost) + ($itemData['quantity'] * $perUnitTotal)) / ($oldQuantity + $itemData['quantity']);
             $stock->update(['average_cost' => $newAvg]);
 
             StockMovement::create([
                 'stock_id' => $stock->id,
                 'type' => MovementType::IN,
                 'quantity' => $itemData['quantity'],
-                'purchase_price' => $invoiceItem->cost,
+                'purchase_price' => $perUnitTotal,
                 'currency' => 'CUP',
                 'exchange_rate_id' => null,
                 'reason' => 'Devolución factura '.$invoice->id,
@@ -377,10 +388,10 @@ class InvoiceController extends Controller
                 'product_id' => $invoiceItem->product_id,
                 'warehouse_id' => $invoice->warehouse_id,
                 'quantity_remaining' => $itemData['quantity'],
-                'unit_cost_cup' => $invoiceItem->cost,
-                'currency' => 'CUP',
-                'indirect_cost' => 0,
-                'total_cost_cup' => $invoiceItem->cost * $itemData['quantity'],
+                'unit_cost_cup' => $directCostCup,
+                'indirect_cost' => $indirectUnit,
+                'total_cost_cup' => ($directCostCup + $indirectUnit) * $itemData['quantity'],
+                'currency' => $invoice->currency,
                 'received_at' => now(),
             ]);
 
@@ -390,11 +401,11 @@ class InvoiceController extends Controller
                 'warehouse_id' => $invoice->warehouse_id,
                 'movement_type' => MovementType::IN,
                 'quantity' => $itemData['quantity'],
-                'unit_cost_cup' => $invoiceItem->cost,
-                'indirect_cost_unit' => 0,
-                'currency' => 'CUP',
-                'exchange_rate_id' => null,
-                'total_cost_cup' => $invoiceItem->cost * $itemData['quantity'],
+                'unit_cost_cup' => $directCostCup,
+                'indirect_cost_unit' => $indirectUnit,
+                'currency' => $invoice->currency,
+                'exchange_rate_id' => $invoice->exchange_rate_id,
+                'total_cost_cup' => ($directCostCup + $indirectUnit) * $itemData['quantity'],
                 'reference_type' => InvoiceReturn::class,
                 'reference_id' => $return->id,
                 'user_id' => Auth::id(),
