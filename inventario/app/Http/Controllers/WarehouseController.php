@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Warehouse, Stock, Category, Product, Sale, Invoice, Purchase};
+use App\Models\{Warehouse, Stock, Category, Product, Invoice, Purchase};
 use Illuminate\Http\Request;
 
 class WarehouseController extends Controller
@@ -42,7 +42,6 @@ class WarehouseController extends Controller
     {
         $hasDependencies =
             Stock::where('warehouse_id', $warehouse->id)->exists() ||
-            Sale::where('warehouse_id', $warehouse->id)->exists() ||
             Invoice::where('warehouse_id', $warehouse->id)->exists() ||
             Purchase::where('warehouse_id', $warehouse->id)->exists();
 
