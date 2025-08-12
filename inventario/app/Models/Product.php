@@ -18,7 +18,17 @@ class Product extends Model
         'price',
         'cost',
         'currency',
+        'cost_cup',
+        'cost_usd',
+        'cost_mlc',
         'sku',
+    ];
+
+    protected $casts = [
+        'cost' => 'decimal:2',
+        'cost_cup' => 'decimal:2',
+        'cost_usd' => 'decimal:2',
+        'cost_mlc' => 'decimal:2',
     ];
 
     public function category(): BelongsTo
