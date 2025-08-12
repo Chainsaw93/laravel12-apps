@@ -17,8 +17,8 @@ class InvoiceReturn extends Model
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
-        'total_cost' => 'decimal:2',
+        'total_amount' => 'decimal:4',
+        'total_cost' => 'decimal:4',
     ];
 
     public function invoice(): BelongsTo

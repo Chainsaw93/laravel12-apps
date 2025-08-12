@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->decimal('cost_cup', 12, 2)->default(0)->after('currency');
-            $table->decimal('cost_usd', 12, 2)->nullable()->after('cost_cup');
-            $table->decimal('cost_mlc', 12, 2)->nullable()->after('cost_usd');
+            $table->decimal('cost_cup', 18, 4)->default(0)->after('currency');
+            $table->decimal('cost_usd', 18, 4)->nullable()->after('cost_cup');
+            $table->decimal('cost_mlc', 18, 4)->nullable()->after('cost_usd');
         });
     }
 

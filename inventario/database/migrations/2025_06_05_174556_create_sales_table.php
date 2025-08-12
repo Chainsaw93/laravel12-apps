@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained('warehouses')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->integer('quantity');
-            $table->decimal('price_per_unit', 12, 2);
+            $table->decimal('price_per_unit', 18, 4);
             $table->enum('currency', ['CUP','USD','MLC']);
             $table->foreignId('exchange_rate_id')->nullable()->constrained('exchange_rates')->nullOnDelete();
             $table->string('payment_method');

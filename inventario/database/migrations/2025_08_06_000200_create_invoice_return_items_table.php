@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('invoice_return_id')->constrained('invoice_returns')->cascadeOnDelete();
             $table->foreignId('invoice_item_id')->constrained('invoice_items')->cascadeOnDelete();
             $table->integer('quantity');
-            $table->decimal('amount', 12, 2);
-            $table->decimal('cost', 12, 2);
+            $table->decimal('amount', 18, 4);
+            $table->decimal('cost', 18, 4);
             $table->timestamps();
         });
     }

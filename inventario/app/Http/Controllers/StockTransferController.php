@@ -36,7 +36,7 @@ class StockTransferController extends Controller
                 ->where(fn ($q) => $q->where('product_id', $product_id))],
             'quantity' => 'required|integer|min:1',
         ], [
-            'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+            'unit_id.exists' => __('messages.unit_mismatch'),
         ]);
 
         $fromWarehouse = Warehouse::find($data['from_warehouse_id']);
@@ -56,7 +56,7 @@ class StockTransferController extends Controller
 
                 if (! $from || $from->quantity < $baseQty) {
                     throw ValidationException::withMessages([
-                        'quantity' => 'Not enough stock in origin warehouse',
+                        'quantity' => __('messages.origin_stock_insufficient'),
                     ]);
                 }
 
@@ -155,7 +155,7 @@ class StockTransferController extends Controller
                     }
                     if ($remaining > 0) {
                         throw ValidationException::withMessages([
-                            'quantity' => 'Not enough stock in origin warehouse',
+                            'quantity' => __('messages.origin_stock_insufficient'),
                         ]);
                     }
                 } else {

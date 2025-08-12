@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_id')->constrained()->cascadeOnDelete();
             $table->string('description');
-            $table->decimal('amount_cup', 12, 2);
+            $table->decimal('amount_cup', 18, 4);
             $table->boolean('allocated')->default(false);
             $table->timestamp('created_at')->useCurrent();
         });

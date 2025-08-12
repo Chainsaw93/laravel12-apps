@@ -15,7 +15,7 @@ class ProductController extends Controller
         $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $image), true);
 
         if ($data === false) {
-            throw new \RuntimeException('Invalid image data.');
+            throw new \RuntimeException(__('messages.invalid_image_data'));
         }
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'img');
@@ -192,7 +192,7 @@ class ProductController extends Controller
             $product->invoiceItems()->exists()
         ) {
             return redirect()->route('products.index')
-                ->withErrors(['product' => __('This product has related records and cannot be deleted.')]);
+                ->withErrors(['product' => __('messages.product_delete_error')]);
         }
 
         if ($product->image_path) {

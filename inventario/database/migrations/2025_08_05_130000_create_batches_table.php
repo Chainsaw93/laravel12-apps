@@ -13,10 +13,10 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('quantity_remaining');
-            $table->decimal('unit_cost_cup', 10, 2);
+            $table->decimal('unit_cost_cup', 18, 4);
             $table->string('currency', 3)->default('CUP');
-            $table->decimal('indirect_cost', 10, 2)->default(0);
-            $table->decimal('total_cost_cup', 10, 2);
+            $table->decimal('indirect_cost', 18, 4)->default(0);
+            $table->decimal('total_cost_cup', 18, 4);
             $table->timestamp('received_at');
             $table->timestamps();
         });

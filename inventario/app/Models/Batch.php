@@ -20,9 +20,9 @@ class Batch extends Model
     ];
 
     protected $casts = [
-        'unit_cost_cup' => 'decimal:2',
-        'indirect_cost' => 'decimal:2',
-        'total_cost_cup' => 'decimal:2',
+        'unit_cost_cup' => 'decimal:4',
+        'indirect_cost' => 'decimal:4',
+        'total_cost_cup' => 'decimal:4',
         'received_at' => 'datetime',
     ];
 

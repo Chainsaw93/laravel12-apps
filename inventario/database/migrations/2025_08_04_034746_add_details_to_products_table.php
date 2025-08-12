@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('image_path')->nullable();
             $table->date('expiry_date')->nullable();
-            $table->decimal('price', 12, 2)->nullable();
+            $table->decimal('price', 18, 4)->nullable();
             $table->string('sku')->unique();
         });
     }

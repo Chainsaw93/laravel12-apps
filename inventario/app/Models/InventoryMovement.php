@@ -27,9 +27,9 @@ class InventoryMovement extends Model
 
     protected $casts = [
         'movement_type' => MovementType::class,
-        'unit_cost_cup' => 'decimal:2',
-        'indirect_cost_unit' => 'decimal:2',
-        'total_cost_cup' => 'decimal:2',
+        'unit_cost_cup' => 'decimal:4',
+        'indirect_cost_unit' => 'decimal:4',
+        'total_cost_cup' => 'decimal:4',
     ];
 
     public function batch(): BelongsTo

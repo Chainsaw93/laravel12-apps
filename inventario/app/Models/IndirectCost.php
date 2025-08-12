@@ -17,7 +17,7 @@ class IndirectCost extends Model
     ];
 
     protected $casts = [
-        'amount_cup' => 'decimal:2',
+        'amount_cup' => 'decimal:4',
         'allocated' => 'boolean',
     ];
 

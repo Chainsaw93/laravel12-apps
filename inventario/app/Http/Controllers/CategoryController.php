@@ -74,7 +74,7 @@ class CategoryController extends Controller
     {
         if ($category->children()->exists() || $category->products()->exists()) {
             return redirect()->route('categories.index')
-                ->withErrors(['category' => __('This category has child categories or products and cannot be deleted.')]);
+                ->withErrors(['category' => __('messages.category_delete_error')]);
         }
 
         if ($category->image_path) {
@@ -89,12 +89,12 @@ class CategoryController extends Controller
     {
         $parts = explode(',', $imageData);
         if (count($parts) < 2) {
-            abort(422, 'Invalid image data');
+            abort(422, __('messages.invalid_image_data'));
         }
 
         $image = base64_decode($parts[1]);
         if ($image === false) {
-            abort(422, 'Invalid image data');
+            abort(422, __('messages.invalid_image_data'));
         }
 
         // Ensure the decoded image does not exceed 5MB
