@@ -109,10 +109,24 @@ class PurchaseController extends Controller
                     'exchange_rate_id' => $rate?->id,
                 ]);
 
-                Product::where('id', $item['product_id'])->update([
-                    'cost' => $currencyCost,
-                    'currency' => $data['currency'],
-                ]);
+                $totalQty = Stock::where('product_id', $item['product_id'])->sum('quantity');
+                $currentAvg = $product->cost_cup ?? 0;
+                $newAvgCostCup = ($totalQty + $baseQty) > 0
+                    ? (($totalQty * $currentAvg) + ($baseQty * $costCup)) / ($totalQty + $baseQty)
+                    : $costCup;
+
+                $productUpdates = [
+                    'cost_cup' => $newAvgCostCup,
+                    'cost' => $newAvgCostCup,
+                    'currency' => 'CUP',
+                ];
+
+                if ($rate) {
+                    $currencyField = 'cost_' . strtolower($data['currency']);
+                    $productUpdates[$currencyField] = $newAvgCostCup / $rate->rate_to_cup;
+                }
+
+                Product::where('id', $item['product_id'])->update($productUpdates);
 
                 $oldQuantity = $stock->quantity;
                 $oldCost = $stock->average_cost;
