@@ -14,6 +14,7 @@ class PurchaseItem extends Model
         'currency_cost',
         'cost_cup',
         'exchange_rate_id',
+        'batch_id',
     ];
 
     public function purchase()
@@ -34,5 +35,10 @@ class PurchaseItem extends Model
     public function exchangeRate()
     {
         return $this->belongsTo(ExchangeRate::class);
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class);
     }
 }

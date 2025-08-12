@@ -37,10 +37,7 @@ class IndirectCostAllocator
                 $allocatedTotal = $totalIndirect * $weight;
                 $perUnitIndirect = $allocatedTotal / $item->quantity;
 
-                $batch = Batch::where('product_id', $item->product_id)
-                    ->where('warehouse_id', $purchase->warehouse_id)
-                    ->latest('received_at')
-                    ->first();
+                $batch = Batch::find($item->batch_id);
 
                 if ($batch) {
                     $batch->indirect_cost = $perUnitIndirect;
