@@ -25,10 +25,10 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'cost' => 'decimal:2',
-        'cost_cup' => 'decimal:2',
-        'cost_usd' => 'decimal:2',
-        'cost_mlc' => 'decimal:2',
+        'cost' => 'decimal:4',
+        'cost_cup' => 'decimal:4',
+        'cost_usd' => 'decimal:4',
+        'cost_mlc' => 'decimal:4',
     ];
 
     public function category(): BelongsTo

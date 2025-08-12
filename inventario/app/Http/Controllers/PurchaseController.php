@@ -53,7 +53,7 @@ class PurchaseController extends Controller
                 'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
                     ->where(fn ($q) => $q->where('product_id', $product_id))],
             ], [
-                'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+                'unit_id.exists' => __('messages.unit_mismatch'),
             ])->validate();
         }
 

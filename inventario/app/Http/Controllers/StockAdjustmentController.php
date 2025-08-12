@@ -46,7 +46,7 @@ class StockAdjustmentController extends Controller
                 'reason' => 'required|string',
                 'description' => 'nullable|string',
             ], [
-                'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+                'unit_id.exists' => __('messages.unit_mismatch'),
             ]);
 
             DB::transaction(function () use ($data) {
@@ -126,7 +126,7 @@ class StockAdjustmentController extends Controller
                 'reason' => 'required|string',
                 'description' => 'nullable|string',
             ], [
-                'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+                'unit_id.exists' => __('messages.unit_mismatch'),
             ]);
 
             DB::transaction(function () use ($data) {
@@ -143,7 +143,7 @@ class StockAdjustmentController extends Controller
 
                 if (! $stock || $stock->quantity < $baseQty) {
                     throw ValidationException::withMessages([
-                        'quantity' => 'Not enough stock',
+                        'quantity' => __('messages.insufficient_stock'),
                     ]);
                 }
 
@@ -186,7 +186,7 @@ class StockAdjustmentController extends Controller
                     }
                     if ($remaining > 0) {
                         throw ValidationException::withMessages([
-                            'quantity' => 'Not enough stock',
+                            'quantity' => __('messages.insufficient_stock'),
                         ]);
                     }
                 } else {
@@ -224,7 +224,7 @@ class StockAdjustmentController extends Controller
                     }
                     if ($remaining > 0) {
                         throw ValidationException::withMessages([
-                            'quantity' => 'Not enough stock',
+                            'quantity' => __('messages.insufficient_stock'),
                         ]);
                     }
                 }

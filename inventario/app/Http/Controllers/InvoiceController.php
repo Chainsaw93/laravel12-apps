@@ -68,7 +68,7 @@ class InvoiceController extends Controller
                 'unit_id' => ['nullable', Rule::exists('product_units', 'unit_id')
                     ->where(fn ($q) => $q->where('product_id', $product_id))],
             ], [
-                'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+                'unit_id.exists' => __('messages.unit_mismatch'),
             ])->validate();
         }
         $rate = null;
@@ -76,7 +76,7 @@ class InvoiceController extends Controller
             $rate = ExchangeRate::find($data['exchange_rate_id']);
             if (! $rate) {
                 return back()->withErrors([
-                    'exchange_rate_id' => 'Invalid exchange rate',
+                    'exchange_rate_id' => __('messages.invalid_exchange_rate'),
                 ])->withInput();
             }
         } else {
@@ -115,7 +115,7 @@ class InvoiceController extends Controller
                         ->lockForUpdate()
                         ->first();
                     if (! $stock || $stock->quantity < $baseQty) {
-                        throw new \Exception('Insufficient stock');
+                        throw new \Exception(__('messages.insufficient_stock'));
                     }
 
                     $currencyPrice = $itemData['price'] / $factor;
@@ -160,7 +160,7 @@ class InvoiceController extends Controller
                             $remaining -= $qtyToRemove;
                         }
                         if ($remaining > 0) {
-                            throw new \Exception('Insufficient stock');
+                            throw new \Exception(__('messages.insufficient_stock'));
                         }
                     } else {
                         $order = $method === 'fifo' ? 'asc' : 'desc';
@@ -198,7 +198,7 @@ class InvoiceController extends Controller
                             $remaining -= $take;
                         }
                         if ($remaining > 0) {
-                            throw new \Exception('Insufficient stock');
+                            throw new \Exception(__('messages.insufficient_stock'));
                         }
                     }
 
@@ -327,7 +327,7 @@ class InvoiceController extends Controller
                 ->findOrFail($itemData['invoice_item_id']);
             $available = $invoiceItem->quantity - $invoiceItem->returned_quantity;
             if ($itemData['quantity'] > $available) {
-                throw new \Exception('Return quantity exceeds available amount');
+                throw new \Exception(__('messages.return_quantity_exceeds'));
             }
             $amount = $itemData['quantity'] * $invoiceItem->price;
 

@@ -15,11 +15,11 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->enum('movement_type', ['in', 'out', 'transfer_in', 'transfer_out', 'adjustment_pos', 'adjustment_neg']);
             $table->unsignedInteger('quantity');
-            $table->decimal('unit_cost_cup', 10, 2);
-            $table->decimal('indirect_cost_unit', 10, 2)->default(0);
+            $table->decimal('unit_cost_cup', 18, 4);
+            $table->decimal('indirect_cost_unit', 18, 4)->default(0);
             $table->string('currency', 3)->default('CUP');
             $table->foreignId('exchange_rate_id')->nullable()->constrained()->nullOnDelete();
-            $table->decimal('total_cost_cup', 10, 2);
+            $table->decimal('total_cost_cup', 18, 4);
             $table->nullableMorphs('reference');
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();

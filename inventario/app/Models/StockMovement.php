@@ -26,7 +26,7 @@ class StockMovement extends Model
 
     protected $casts = [
         'type' => MovementType::class,
-        'unit_cost' => 'decimal:2',
+        'unit_cost' => 'decimal:4',
     ];
 
     public function stock(): BelongsTo

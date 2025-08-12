@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('reason')->nullable();
-            $table->decimal('total_amount', 12, 2)->default(0);
-            $table->decimal('total_cost', 12, 2)->default(0);
+            $table->decimal('total_amount', 18, 4)->default(0);
+            $table->decimal('total_cost', 18, 4)->default(0);
             $table->timestamps();
         });
     }

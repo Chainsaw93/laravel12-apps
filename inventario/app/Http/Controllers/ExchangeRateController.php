@@ -54,7 +54,7 @@ class ExchangeRateController extends Controller
 
         if ($inUse) {
             return redirect()->route('exchange-rates.index')
-                ->withErrors(__('This exchange rate is in use and cannot be deleted.'));
+                ->withErrors(__('messages.exchange_rate_in_use'));
         }
 
         $exchangeRate->delete();

@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('purchase_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->integer('quantity');
-            $table->decimal('currency_cost', 12, 2);
-            $table->decimal('cost_cup', 12, 2);
+            $table->decimal('currency_cost', 18, 4);
+            $table->decimal('cost_cup', 18, 4);
             $table->foreignId('exchange_rate_id')->nullable()->constrained('exchange_rates')->nullOnDelete();
             $table->timestamps();
         });

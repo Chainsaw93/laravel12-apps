@@ -47,7 +47,7 @@ class WarehouseController extends Controller
 
         if ($hasDependencies) {
             return redirect()->route('warehouses.index')
-                ->withErrors(['warehouse' => __('This warehouse has associated records and cannot be deleted.')]);
+                ->withErrors(['warehouse' => __('messages.warehouse_delete_error')]);
         }
 
         $warehouse->delete();

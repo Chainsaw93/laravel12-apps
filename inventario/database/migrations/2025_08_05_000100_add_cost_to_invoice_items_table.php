@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoice_items', function (Blueprint $table) {
-            $table->decimal('cost', 12, 2)->default(0)->after('price');
-            $table->decimal('total_cost', 12, 2)->default(0)->after('total');
+            $table->decimal('cost', 18, 4)->default(0)->after('price');
+            $table->decimal('total_cost', 18, 4)->default(0)->after('total');
         });
     }
 

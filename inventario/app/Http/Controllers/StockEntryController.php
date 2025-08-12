@@ -35,7 +35,7 @@ class StockEntryController extends Controller
             'reason' => 'nullable|string',
             'description' => 'nullable|string',
         ], [
-            'unit_id.exists' => 'La unidad seleccionada no corresponde al producto.',
+            'unit_id.exists' => __('messages.unit_mismatch'),
         ]);
 
         DB::transaction(function () use ($data) {

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->enum('currency', ['CUP','USD','MLC']);
             $table->foreignId('exchange_rate_id')->nullable()->constrained('exchange_rates')->nullOnDelete();
-            $table->decimal('total', 12, 2)->default(0);
+            $table->decimal('total', 18, 4)->default(0);
             $table->timestamps();
         });
     }

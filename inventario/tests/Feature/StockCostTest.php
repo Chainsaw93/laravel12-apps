@@ -61,7 +61,7 @@ class StockCostTest extends TestCase
         $this->assertEquals(15, $stock->quantity);
 
         $item = InvoiceItem::first();
-        $this->assertEquals(15.0, $item->cost);
-        $this->assertEquals(75.0, $item->total_cost);
+        $this->assertEquals(10.0, $item->cost);
+        $this->assertEquals(50.0, $item->total_cost);
     }
 }
